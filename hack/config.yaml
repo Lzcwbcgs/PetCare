@@ -1,10 +1,9 @@
-
 # CLI tool, only in development environment.
 # https://goframe.org/docs/cli
 gfcli:
   gen:
     dao:
-      - link: "mysql:root:2930441928@tcp(127.0.0.1:3306)/pet_medical_system"
+      - link: "mysql:root:password@tcp(127.0.0.1:3306)/pet_medical_system"
         group: "default"
         descriptionTag: true
         stdTime: true
