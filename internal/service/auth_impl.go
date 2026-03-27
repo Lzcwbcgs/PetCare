@@ -8,10 +8,6 @@ import (
 	"PetCare/internal/consts"
 	"PetCare/internal/dao"
 	"PetCare/internal/model/do"
-
-	"github.com/gogf/gf/v2/errors/gcode"
-	"github.com/gogf/gf/v2/errors/gerror"
-	"github.com/gogf/gf/v2/frame/g"
 )
 
 type authService struct{}
@@ -34,7 +30,7 @@ func (s authService) Register(ctx context.Context, in RegisterInput) (*RegisterO
 		return nil, err
 	}
 	if record != nil {
-		return nil, gerror.NewCode(gcode.New(409, "", nil), "用户名已存在")
+		return nil, consts.NewConflictError("用户名已存在")
 	}
 
 	hashedPassword := hashPassword(in.Password)
@@ -51,39 +47,44 @@ func (s authService) Register(ctx context.Context, in RegisterInput) (*RegisterO
 	}).Insert()
 	if err != nil {
 		if isDuplicateErr(err) {
-			return nil, gerror.NewCode(gcode.New(409, "", nil), "用户名已存在")
+			return nil, consts.NewConflictError("用户名已存在")
 		}
-		return nil, gerror.Wrap(err, "创建用户失败")
+		return nil, consts.WrapInternalError(err, "创建用户失败")
 	}
 
 	userID, err := result.LastInsertId()
 	if err != nil {
-		return nil, gerror.Wrap(err, "获取用户ID失败")
+		return nil, consts.WrapInternalError(err, "获取用户ID失败")
 	}
 
 	return &RegisterOutput{UserID: userID}, nil
 }
 
 func (s authService) Login(ctx context.Context, in LoginInput) (*LoginOutput, error) {
-	record, err := s.findByUsername(ctx, in.Role, in.Username)
+	var role = NormalizeRole(in.Role)
+	if !IsSupportedRole(role) {
+		return nil, consts.NewBadRequestError("登录角色不合法")
+	}
+
+	record, err := s.findByUsername(ctx, role, in.Username)
 	if err != nil {
 		return nil, err
 	}
 	if record == nil || !verifyPassword(in.Password, record.PasswordHash, record.Password) {
-		return nil, gerror.NewCode(gcode.New(401, "", nil), "用户名或密码错误")
+		return nil, consts.NewUnauthorizedError("用户名或密码错误")
 	}
 	if record.Status != 1 {
-		return nil, gerror.NewCode(gcode.New(403, "", nil), "账号已被禁用")
+		return nil, consts.NewForbiddenError("账号已被禁用")
 	}
 
-	expireHours := g.Cfg().MustGet(ctx, "auth.expireHours", 24).Int()
+	expireHours := authConfigInt(ctx, "auth.expireHours", 24)
 	now := time.Now()
 	expireAt := time.Now().Add(time.Duration(expireHours) * time.Hour)
 	claims := AuthClaims{
 		UserID:   record.ID,
 		Username: record.Username,
-		Role:     in.Role,
-		Issuer:   g.Cfg().MustGet(ctx, "auth.jwtIssuer", "petcare").String(),
+		Role:     role,
+		Issuer:   authConfigString(ctx, "auth.jwtIssuer", "petcare"),
 		IssuedAt: now.Unix(),
 		Exp:      expireAt.Unix(),
 	}
@@ -97,7 +98,7 @@ func (s authService) Login(ctx context.Context, in LoginInput) (*LoginOutput, er
 		Token:    token,
 		ExpireAt: expireAt.Format("2006-01-02 15:04:05"),
 		UserID:   record.ID,
-		Role:     in.Role,
+		Role:     role,
 	}, nil
 }
 
@@ -106,8 +107,8 @@ func (s authService) Me(ctx context.Context, claims AuthClaims) (*MeOutput, erro
 	if err != nil {
 		return nil, err
 	}
-	if record == nil || record.ID != claims.UserID {
-		return nil, gerror.NewCode(gcode.New(401, "", nil), "未登录或 token 无效")
+	if err = validateClaimsRecord(claims, record); err != nil {
+		return nil, err
 	}
 
 	return &MeOutput{
@@ -121,10 +122,30 @@ func (s authService) Me(ctx context.Context, claims AuthClaims) (*MeOutput, erro
 	}, nil
 }
 
+func (s authService) Logout(ctx context.Context, token string) error {
+	claims, err := parseToken(ctx, token)
+	if err != nil {
+		return err
+	}
+	revokeToken(token, time.Until(time.Unix(claims.Exp, 0)))
+	return nil
+}
+
 func (s authService) VerifyToken(ctx context.Context, token string) (*AuthClaims, error) {
 	claims, err := parseToken(ctx, token)
 	if err != nil {
-		return nil, gerror.NewCode(gcode.New(401, "", nil), "未登录或 token 无效")
+		return nil, consts.NewUnauthorizedError("")
+	}
+	if isTokenRevoked(token) {
+		return nil, consts.NewUnauthorizedError("")
+	}
+
+	record, err := s.findByUsername(ctx, claims.Role, claims.Username)
+	if err != nil {
+		return nil, err
+	}
+	if err = validateClaimsRecord(*claims, record); err != nil {
+		return nil, err
 	}
 	return claims, nil
 }
@@ -136,7 +157,7 @@ func (s authService) findByUsername(ctx context.Context, role string, username s
 			Where(dao.User.Columns().Username, username).
 			One()
 		if err != nil {
-			return nil, gerror.Wrap(err, "查询用户失败")
+			return nil, consts.WrapInternalError(err, "查询用户失败")
 		}
 		if record.IsEmpty() {
 			return nil, nil
@@ -154,7 +175,7 @@ func (s authService) findByUsername(ctx context.Context, role string, username s
 			Where(dao.Doctor.Columns().Username, username).
 			One()
 		if err != nil {
-			return nil, gerror.Wrap(err, "查询医生失败")
+			return nil, consts.WrapInternalError(err, "查询医生失败")
 		}
 		if record.IsEmpty() {
 			return nil, nil
@@ -172,7 +193,7 @@ func (s authService) findByUsername(ctx context.Context, role string, username s
 			Where(dao.Admin.Columns().Username, username).
 			One()
 		if err != nil {
-			return nil, gerror.Wrap(err, "查询管理员失败")
+			return nil, consts.WrapInternalError(err, "查询管理员失败")
 		}
 		if record.IsEmpty() {
 			return nil, nil
@@ -185,7 +206,7 @@ func (s authService) findByUsername(ctx context.Context, role string, username s
 			Status:       record[dao.Admin.Columns().Status].Int(),
 		}, nil
 	default:
-		return nil, gerror.NewCode(gcode.New(400, "", nil), "登录角色不合法")
+		return nil, consts.NewBadRequestError("登录角色不合法")
 	}
 }
 
@@ -194,4 +215,14 @@ func isDuplicateErr(err error) bool {
 		return false
 	}
 	return strings.Contains(strings.ToLower(err.Error()), "duplicate")
+}
+
+func validateClaimsRecord(claims AuthClaims, record *authRecord) error {
+	if record == nil || record.ID != claims.UserID {
+		return consts.NewUnauthorizedError("")
+	}
+	if record.Status != 1 {
+		return consts.NewForbiddenError("账号已被禁用")
+	}
+	return nil
 }

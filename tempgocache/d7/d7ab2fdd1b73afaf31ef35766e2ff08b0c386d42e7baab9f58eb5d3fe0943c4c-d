@@ -1,0 +1,5 @@
+./auth.go
+./profile_admin.go
+./profile_doctor.go
+./profile_helper.go
+./profile_user.go

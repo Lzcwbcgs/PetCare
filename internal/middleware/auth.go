@@ -6,15 +6,13 @@ import (
 	"PetCare/internal/consts"
 	"PetCare/internal/service"
 
-	"github.com/gogf/gf/v2/errors/gcode"
-	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/net/ghttp"
 )
 
 func Auth(r *ghttp.Request) {
 	token := bearerToken(r.Header.Get("Authorization"))
 	if token == "" {
-		r.SetError(gerror.NewCode(gcode.New(401, "", nil), "未登录或 token 无效"))
+		r.SetError(consts.NewUnauthorizedError(""))
 		return
 	}
 

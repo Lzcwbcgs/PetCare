@@ -2,13 +2,12 @@ package auth
 
 import (
 	"context"
+	"strings"
 
 	authv1 "PetCare/api/auth/v1"
 	"PetCare/internal/consts"
 	"PetCare/internal/service"
 
-	"github.com/gogf/gf/v2/errors/gerror"
-	"github.com/gogf/gf/v2/errors/gcode"
 	"github.com/gogf/gf/v2/frame/g"
 )
 
@@ -60,7 +59,7 @@ func (c *PrivateController) Me(ctx context.Context, req *authv1.MeReq) (res *aut
 	g.RequestFromCtx(ctx).SetCtxVar(consts.CtxKeyResponseMessage, "success")
 	claims, ok := g.RequestFromCtx(ctx).GetCtxVar(consts.CtxKeyAuthClaims).Val().(*service.AuthClaims)
 	if !ok || claims == nil {
-		return nil, gerror.NewCode(gcode.New(401, "", nil), "未登录或 token 无效")
+		return nil, consts.NewUnauthorizedError("")
 	}
 
 	output, err := service.Auth.Me(ctx, *claims)
@@ -80,5 +79,23 @@ func (c *PrivateController) Me(ctx context.Context, req *authv1.MeReq) (res *aut
 
 func (c *PrivateController) Logout(ctx context.Context, req *authv1.LogoutReq) (res *authv1.LogoutRes, err error) {
 	g.RequestFromCtx(ctx).SetCtxVar(consts.CtxKeyResponseMessage, "退出成功")
+	token := bearerToken(g.RequestFromCtx(ctx).Header.Get("Authorization"))
+	if token == "" {
+		return nil, consts.NewUnauthorizedError("")
+	}
+	if err = service.Auth.Logout(ctx, token); err != nil {
+		return nil, err
+	}
 	return &authv1.LogoutRes{}, nil
+}
+
+func bearerToken(authorization string) string {
+	if authorization == "" {
+		return ""
+	}
+	parts := strings.SplitN(authorization, " ", 2)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+		return ""
+	}
+	return strings.TrimSpace(parts[1])
 }

@@ -1,0 +1,11 @@
+./auth.go
+./auth_config.go
+./auth_impl.go
+./auth_password.go
+./auth_role.go
+./auth_token.go
+./profile_admin.go
+./profile_doctor.go
+./profile_user.go
+./auth_role_test.go
+./auth_token_test.go
