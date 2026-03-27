@@ -1,0 +1,11 @@
+./gcfg.go
+./gcfg_adaper.go
+./gcfg_adapter_content.go
+./gcfg_adapter_content_ctx.go
+./gcfg_adapter_file.go
+./gcfg_adapter_file_content.go
+./gcfg_adapter_file_ctx.go
+./gcfg_adapter_file_path.go
+./gcfg_ctx_keys.go
+./gcfg_loader.go
+./gcfg_watcher_registry.go

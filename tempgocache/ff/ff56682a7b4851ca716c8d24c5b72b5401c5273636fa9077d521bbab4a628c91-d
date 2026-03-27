@@ -1,0 +1,6 @@
+./auth.go
+./auth_config.go
+./auth_impl.go
+./auth_password.go
+./auth_role.go
+./auth_token.go

@@ -52,6 +52,7 @@ type IAuth interface {
 	Register(ctx context.Context, in RegisterInput) (*RegisterOutput, error)
 	Login(ctx context.Context, in LoginInput) (*LoginOutput, error)
 	Me(ctx context.Context, claims AuthClaims) (*MeOutput, error)
+	Logout(ctx context.Context, token string) error
 	VerifyToken(ctx context.Context, token string) (*AuthClaims, error)
 }
 

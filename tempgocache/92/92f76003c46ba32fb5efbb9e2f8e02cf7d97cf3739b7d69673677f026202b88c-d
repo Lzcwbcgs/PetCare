@@ -1,0 +1,4 @@
+./auth.go
+./response.go
+./role.go
+./auth_test.go

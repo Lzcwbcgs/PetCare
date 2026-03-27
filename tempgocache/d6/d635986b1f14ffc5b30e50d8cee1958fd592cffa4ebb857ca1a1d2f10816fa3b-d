@@ -1,0 +1,7 @@
+./gtree.go
+./gtree_avltree.go
+./gtree_btree.go
+./gtree_k_v_avltree.go
+./gtree_k_v_btree.go
+./gtree_k_v_redblacktree.go
+./gtree_redblacktree.go

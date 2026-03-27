@@ -6,8 +6,8 @@ import (
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/net/ghttp"
 	"github.com/gogf/gf/v2/net/goai"
-	"github.com/gogf/gf/v2/os/gcmd"
 	"github.com/gogf/gf/v2/os/gcfg"
+	"github.com/gogf/gf/v2/os/gcmd"
 
 	"PetCare/internal/controller/auth"
 	"PetCare/internal/middleware"
@@ -23,9 +23,12 @@ var (
 			g.Cfg().GetAdapter().(*gcfg.AdapterFile).SetFileName("manifest/config/config.yaml")
 
 			var (
-				s              = g.Server()
-				publicAuth     = auth.NewPublic()
-				privateAuth    = auth.NewPrivate()
+				s                = g.Server()
+				publicAuth       = auth.NewPublic()
+				privateAuth      = auth.NewPrivate()
+				userController   = auth.NewUser()
+				doctorController = auth.NewDoctor()
+				adminController  = auth.NewAdmin()
 			)
 
 			s.SetAddr(g.Cfg().MustGet(ctx, "server.address", ":8000").String())
@@ -48,6 +51,24 @@ var (
 							privateAuth,
 						)
 					})
+				})
+				group.Group("/users", func(group *ghttp.RouterGroup) {
+					group.Middleware(middleware.Auth, middleware.Role("user"))
+					group.Bind(
+						userController,
+					)
+				})
+				group.Group("/doctors", func(group *ghttp.RouterGroup) {
+					group.Middleware(middleware.Auth, middleware.Role("doctor"))
+					group.Bind(
+						doctorController,
+					)
+				})
+				group.Group("/admin", func(group *ghttp.RouterGroup) {
+					group.Middleware(middleware.Auth, middleware.Role("admin"))
+					group.Bind(
+						adminController,
+					)
 				})
 			})
 			enhanceOpenAPIDoc(s)

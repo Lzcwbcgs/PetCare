@@ -3,7 +3,7 @@
 gfcli:
   gen:
     dao:
-      - link: "mysql:root:password@tcp(127.0.0.1:3306)/pet_medical_system"
+      - link: "mysql:root:zsy20050318@tcp(127.0.0.1:3306)/pet_medical_system"
         group: "default"
         descriptionTag: true
         stdTime: true
