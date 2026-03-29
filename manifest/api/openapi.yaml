@@ -1,0 +1,1074 @@
+openapi: 3.0.3
+info:
+  title: PetCare API
+  description: 宠物医疗协同管理平台接口文档
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api
+    description: 本地开发环境
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CommonResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          type: object
+
+    # ===== Auth =====
+    RegisterReq:
+      type: object
+      required: [username, password, nickname, phone]
+      properties:
+        username:
+          type: string
+          description: 登录用户名
+          minLength: 3
+          maxLength: 32
+        password:
+          type: string
+          description: 登录密码
+          minLength: 6
+          maxLength: 64
+        nickname:
+          type: string
+          description: 用户昵称
+          minLength: 1
+          maxLength: 32
+        phone:
+          type: string
+          description: 手机号
+        email:
+          type: string
+          description: 邮箱
+          format: email
+
+    RegisterRes:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          format: int64
+          description: 新注册用户ID
+
+    LoginReq:
+      type: object
+      required: [username, password, role]
+      properties:
+        username:
+          type: string
+          description: 登录用户名
+        password:
+          type: string
+          description: 登录密码
+        role:
+          type: string
+          description: 登录角色
+          enum: [user, doctor, admin]
+
+    LoginRes:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT访问令牌
+        expire_at:
+          type: string
+          description: 令牌过期时间
+        user_id:
+          type: integer
+          format: int64
+          description: 当前登录用户ID
+        role:
+          type: string
+          description: 当前登录角色
+
+    MeRes:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        role:
+          type: string
+        nickname:
+          type: string
+        doctor_name:
+          type: string
+        real_name:
+          type: string
+        avatar_url:
+          type: string
+
+    # ===== User Profile =====
+    UserProfileRes:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        nickname:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        avatar_url:
+          type: string
+        status:
+          type: integer
+        created_at:
+          type: string
+
+    UserUpdateProfileReq:
+      type: object
+      properties:
+        nickname:
+          type: string
+          maxLength: 32
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        avatar_url:
+          type: string
+          maxLength: 255
+
+    UpdatePasswordReq:
+      type: object
+      required: [old_password, new_password]
+      properties:
+        old_password:
+          type: string
+          minLength: 6
+          maxLength: 64
+        new_password:
+          type: string
+          minLength: 6
+          maxLength: 64
+
+    # ===== Doctor Profile =====
+    DoctorProfileRes:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        hospital_id:
+          type: integer
+          format: int64
+        hospital_name:
+          type: string
+        username:
+          type: string
+        doctor_name:
+          type: string
+        gender:
+          type: integer
+          description: 1男 2女 0未知
+        phone:
+          type: string
+        email:
+          type: string
+        title:
+          type: string
+        specialty:
+          type: string
+        avatar_url:
+          type: string
+        intro:
+          type: string
+        status:
+          type: integer
+
+    DoctorUpdateProfileReq:
+      type: object
+      properties:
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        avatar_url:
+          type: string
+          maxLength: 255
+        intro:
+          type: string
+
+    # ===== Admin Profile =====
+    AdminProfileRes:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        real_name:
+          type: string
+        phone:
+          type: string
+        status:
+          type: integer
+        created_at:
+          type: string
+
+    # ===== Pet =====
+    PetItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        pet_name:
+          type: string
+        pet_type:
+          type: string
+        avatar_url:
+          type: string
+        gender:
+          type: integer
+          description: 1公 2母 0未知
+        age:
+          type: integer
+        age_unit:
+          type: string
+          enum: [month, year]
+        breed:
+          type: string
+        weight:
+          type: number
+          format: float
+        sterilized:
+          type: integer
+          description: 1是 0否
+        remark:
+          type: string
+        status:
+          type: integer
+        created_at:
+          type: string
+        updated_at:
+          type: string
+
+    PetListRes:
+      type: object
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/PetItem'
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    PetCreateReq:
+      type: object
+      required: [pet_name]
+      properties:
+        pet_name:
+          type: string
+          maxLength: 50
+        pet_type:
+          type: string
+          maxLength: 20
+        avatar_url:
+          type: string
+          maxLength: 255
+        gender:
+          type: integer
+          enum: [0, 1, 2]
+        age:
+          type: integer
+          minimum: 0
+        age_unit:
+          type: string
+          enum: [month, year]
+        breed:
+          type: string
+          maxLength: 50
+        weight:
+          type: number
+          minimum: 0
+        sterilized:
+          type: integer
+          enum: [0, 1]
+        remark:
+          type: string
+
+    PetUpdateReq:
+      type: object
+      properties:
+        pet_name:
+          type: string
+          maxLength: 50
+        pet_type:
+          type: string
+          maxLength: 20
+        avatar_url:
+          type: string
+          maxLength: 255
+        gender:
+          type: integer
+          enum: [0, 1, 2]
+        age:
+          type: integer
+          minimum: 0
+        age_unit:
+          type: string
+          enum: [month, year]
+        breed:
+          type: string
+          maxLength: 50
+        weight:
+          type: number
+          minimum: 0
+        sterilized:
+          type: integer
+          enum: [0, 1]
+        remark:
+          type: string
+
+    # ===== Medical History =====
+    MedicalHistoryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        pet_id:
+          type: integer
+          format: int64
+        history_type:
+          type: string
+        description:
+          type: string
+        diagnosed_at:
+          type: string
+          description: 确诊时间 yyyy-MM-dd HH:mm:ss
+        is_current:
+          type: integer
+          description: 1是 0否
+        created_at:
+          type: string
+        updated_at:
+          type: string
+
+    MedicalHistoryListRes:
+      type: object
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicalHistoryItem'
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    MedicalHistoryCreateReq:
+      type: object
+      required: [description]
+      properties:
+        history_type:
+          type: string
+          maxLength: 50
+        description:
+          type: string
+        diagnosed_at:
+          type: string
+          description: yyyy-MM-dd HH:mm:ss
+        is_current:
+          type: integer
+          enum: [0, 1]
+
+    # ===== Vaccination =====
+    VaccinationItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        pet_id:
+          type: integer
+          format: int64
+        vaccine_name:
+          type: string
+        vaccination_date:
+          type: string
+          description: yyyy-MM-dd
+        next_due_date:
+          type: string
+          description: yyyy-MM-dd
+        hospital_name:
+          type: string
+        remark:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+
+    VaccinationListRes:
+      type: object
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/VaccinationItem'
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    VaccinationCreateReq:
+      type: object
+      required: [vaccine_name]
+      properties:
+        vaccine_name:
+          type: string
+          maxLength: 100
+        vaccination_date:
+          type: string
+          description: yyyy-MM-dd
+        next_due_date:
+          type: string
+          description: yyyy-MM-dd
+        hospital_name:
+          type: string
+          maxLength: 100
+        remark:
+          type: string
+          maxLength: 255
+
+    # ===== Allergy =====
+    AllergyItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        pet_id:
+          type: integer
+          format: int64
+        allergen:
+          type: string
+        symptom_description:
+          type: string
+        severity_level:
+          type: integer
+          description: 1轻微 2中等 3严重
+        remark:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+
+    AllergyListRes:
+      type: object
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/AllergyItem'
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    AllergyCreateReq:
+      type: object
+      required: [allergen]
+      properties:
+        allergen:
+          type: string
+          maxLength: 100
+        symptom_description:
+          type: string
+          maxLength: 255
+        severity_level:
+          type: integer
+          enum: [1, 2, 3]
+        remark:
+          type: string
+          maxLength: 255
+
+paths:
+  # ==================== 认证模块 ====================
+  /auth/register:
+    post:
+      tags: [认证模块]
+      summary: 用户注册
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterReq'
+      responses:
+        '200':
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RegisterRes'
+
+  /auth/login:
+    post:
+      tags: [认证模块]
+      summary: 统一登录
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginReq'
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/LoginRes'
+
+  /auth/me:
+    get:
+      tags: [认证模块]
+      summary: 获取当前登录信息
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MeRes'
+
+  /auth/logout:
+    post:
+      tags: [认证模块]
+      summary: 退出登录
+      responses:
+        '200':
+          description: 退出成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResponse'
+
+  # ==================== 用户资料 ====================
+  /users/profile:
+    get:
+      tags: [用户资料]
+      summary: 获取用户个人信息
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserProfileRes'
+    put:
+      tags: [用户资料]
+      summary: 更新用户个人信息
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateProfileReq'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResponse'
+
+  /users/password:
+    put:
+      tags: [用户资料]
+      summary: 修改用户密码
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasswordReq'
+      responses:
+        '200':
+          description: 密码修改成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResponse'
+
+  # ==================== 医生资料 ====================
+  /doctors/profile:
+    get:
+      tags: [医生资料]
+      summary: 获取医生个人信息
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DoctorProfileRes'
+    put:
+      tags: [医生资料]
+      summary: 更新医生个人信息
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoctorUpdateProfileReq'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResponse'
+
+  /doctors/password:
+    put:
+      tags: [医生资料]
+      summary: 修改医生密码
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasswordReq'
+      responses:
+        '200':
+          description: 密码修改成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResponse'
+
+  # ==================== 管理员资料 ====================
+  /admin/profile:
+    get:
+      tags: [管理员资料]
+      summary: 获取管理员个人信息
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AdminProfileRes'
+
+  # ==================== 宠物档案 ====================
+  /pets:
+    get:
+      tags: [宠物档案]
+      summary: 获取宠物列表
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: pet_name
+          in: query
+          schema:
+            type: string
+        - name: pet_type
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: integer
+            enum: [0, 1]
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PetListRes'
+    post:
+      tags: [宠物档案]
+      summary: 新增宠物档案
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetCreateReq'
+      responses:
+        '200':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            format: int64
+
+  /pets/{pet_id}:
+    get:
+      tags: [宠物档案]
+      summary: 获取宠物详情
+      parameters:
+        - name: pet_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PetItem'
+    put:
+      tags: [宠物档案]
+      summary: 修改宠物档案
+      parameters:
+        - name: pet_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetUpdateReq'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResponse'
+    delete:
+      tags: [宠物档案]
+      summary: 删除宠物档案
+      parameters:
+        - name: pet_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonResponse'
+
+  # ==================== 宠物病史 ====================
+  /pets/{pet_id}/medical-histories:
+    get:
+      tags: [宠物病史]
+      summary: 获取病史列表
+      parameters:
+        - name: pet_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: is_current
+          in: query
+          schema:
+            type: integer
+            enum: [0, 1]
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MedicalHistoryListRes'
+    post:
+      tags: [宠物病史]
+      summary: 新增病史记录
+      parameters:
+        - name: pet_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalHistoryCreateReq'
+      responses:
+        '200':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            format: int64
+
+  # ==================== 宠物疫苗 ====================
+  /pets/{pet_id}/vaccinations:
+    get:
+      tags: [宠物疫苗]
+      summary: 获取疫苗记录列表
+      parameters:
+        - name: pet_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/VaccinationListRes'
+    post:
+      tags: [宠物疫苗]
+      summary: 新增疫苗记录
+      parameters:
+        - name: pet_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VaccinationCreateReq'
+      responses:
+        '200':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            format: int64
+
+  # ==================== 宠物过敏 ====================
+  /pets/{pet_id}/allergies:
+    get:
+      tags: [宠物过敏]
+      summary: 获取过敏记录列表
+      parameters:
+        - name: pet_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: severity_level
+          in: query
+          schema:
+            type: integer
+            enum: [1, 2, 3]
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AllergyListRes'
+    post:
+      tags: [宠物过敏]
+      summary: 新增过敏记录
+      parameters:
+        - name: pet_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllergyCreateReq'
+      responses:
+        '200':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CommonResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            format: int64
