@@ -1,0 +1,1183 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "PetCare API - 宠物医疗协同管理平台",
+    "description": "基于 GoFrame v2 的宠物医疗协同管理平台后端 API 文档。\n\n## 认证方式\n所有需要认证的接口需要在 HTTP Header 中提供 Bearer Token：\n```\nAuthorization: Bearer <JWT_TOKEN>\n```\n\n## 响应格式\n所有 API 响应都遵循统一的格式：\n```json\n{\n  \"code\": 0,\n  \"message\": \"success\",\n  \"data\": {}\n}\n```\n- code: 错误码，0 表示成功\n- message: 提示信息\n- data: 实际数据，成功时返回具体数据，失败时为 null",
+    "version": "1.0.0",
+    "contact": {
+      "name": "PetCare Team",
+      "url": "https://github.com/pet-care"
+    },
+    "license": {
+      "name": "Apache 2.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "本地开发服务器"
+    },
+    {
+      "url": "https://api.petcare.com",
+      "description": "生产环境服务器"
+    }
+  ],
+  "tags": [
+    {
+      "name": "认证模块",
+      "description": "用户、医生、管理员的注册、登录、登出等认证相关接口"
+    },
+    {
+      "name": "用户资料",
+      "description": "普通用户的个人资料查询、编辑和密码修改接口"
+    },
+    {
+      "name": "医生资料",
+      "description": "医生的个人资料查询、编辑和密码修改接口"
+    },
+    {
+      "name": "管理员资料",
+      "description": "管理员的个人资料查询接口"
+    },
+    {
+      "name": "宠物管理",
+      "description": "宠物档案的创建、查询、编辑和删除接口"
+    }
+  ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "x-apifox-folder": "认证模块",
+        "tags": ["认证模块"],
+        "summary": "用户注册",
+        "description": "新用户注册账户，注册成功后返回新用户ID",
+        "operationId": "authRegister",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password", "nickname", "phone"],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 32,
+                    "description": "登录用户名，长度3-32个字符",
+                    "example": "john_doe"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 64,
+                    "description": "登录密码，长度6-64个字符",
+                    "example": "password123"
+                  },
+                  "nickname": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32,
+                    "description": "用户昵称，长度1-32个字符",
+                    "example": "John Doe"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "description": "手机号码，需要符合手机号格式",
+                    "example": "13800000000"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "邮箱地址（可选）",
+                    "example": "john@example.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "注册成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user_id": {
+                          "type": "integer",
+                          "description": "新注册用户ID",
+                          "example": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "x-apifox-folder": "认证模块",
+        "tags": ["认证模块"],
+        "summary": "统一登录",
+        "description": "用户、医生、管理员使用用户名和密码登录，需要指定登录角色",
+        "operationId": "authLogin",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password", "role"],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "登录用户名",
+                    "example": "john_doe"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "登录密码",
+                    "example": "password123"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": ["user", "doctor", "admin"],
+                    "description": "登录角色，必须是 user、doctor 或 admin 之一",
+                    "example": "user"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "description": "JWT 访问令牌",
+                          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        },
+                        "expire_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "令牌过期时间",
+                          "example": "2024-03-29T14:30:00Z"
+                        },
+                        "user_id": {
+                          "type": "integer",
+                          "description": "当前登录用户ID",
+                          "example": 1
+                        },
+                        "role": {
+                          "type": "string",
+                          "description": "当前登录角色",
+                          "example": "user"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "x-apifox-folder": "认证模块",
+        "tags": ["认证模块"],
+        "summary": "获取当前登录信息",
+        "description": "获取当前登录用户的基本信息，需要有效的 Authorization Token",
+        "operationId": "authMe",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "username": {
+                          "type": "string",
+                          "example": "john_doe"
+                        },
+                        "role": {
+                          "type": "string",
+                          "example": "user"
+                        },
+                        "nickname": {
+                          "type": "string",
+                          "example": "John Doe"
+                        },
+                        "avatar_url": {
+                          "type": "string",
+                          "example": "https://example.com/avatar.jpg"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "x-apifox-folder": "认证模块",
+        "tags": ["认证模块"],
+        "summary": "退出登录",
+        "description": "退出登录，注销当前 Token，使其立即失效",
+        "operationId": "authLogout",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "退出成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/profile": {
+      "get": {
+        "x-apifox-folder": "用户资料",
+        "tags": ["用户资料"],
+        "summary": "获取用户个人信息",
+        "description": "获取当前登录用户的个人资料信息（用户端）",
+        "operationId": "userGetProfile",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "username": {
+                          "type": "string",
+                          "example": "john_doe"
+                        },
+                        "nickname": {
+                          "type": "string",
+                          "example": "John Doe"
+                        },
+                        "phone": {
+                          "type": "string",
+                          "example": "13800000000"
+                        },
+                        "email": {
+                          "type": "string",
+                          "example": "john@example.com"
+                        },
+                        "avatar_url": {
+                          "type": "string",
+                          "example": "https://example.com/avatar.jpg"
+                        },
+                        "status": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2024-03-29T10:00:00Z"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "x-apifox-folder": "用户资料",
+        "tags": ["用户资料"],
+        "summary": "更新用户个人信息",
+        "description": "更新当前登录用户的个人资料信息（用户端）",
+        "operationId": "userUpdateProfile",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nickname": {
+                    "type": "string",
+                    "example": "New Nickname"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "13800000001"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "newemail@example.com"
+                  },
+                  "avatar_url": {
+                    "type": "string",
+                    "example": "https://example.com/new_avatar.jpg"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/password": {
+      "put": {
+        "x-apifox-folder": "用户资料",
+        "tags": ["用户资料"],
+        "summary": "修改用户密码",
+        "description": "修改当前登录用户的密码（用户端）",
+        "operationId": "userUpdatePassword",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["old_password", "new_password"],
+                "properties": {
+                  "old_password": {
+                    "type": "string",
+                    "example": "password123"
+                  },
+                  "new_password": {
+                    "type": "string",
+                    "example": "newpassword456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "修改成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctors/profile": {
+      "get": {
+        "x-apifox-folder": "医生资料",
+        "tags": ["医生资料"],
+        "summary": "获取医生个人信息",
+        "description": "获取当前登录医生的个人资料信息（医生端）",
+        "operationId": "doctorGetProfile",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "hospital_id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "hospital_name": {
+                          "type": "string",
+                          "example": "宠物医院"
+                        },
+                        "username": {
+                          "type": "string",
+                          "example": "dr_smith"
+                        },
+                        "doctor_name": {
+                          "type": "string",
+                          "example": "Smith"
+                        },
+                        "gender": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "phone": {
+                          "type": "string",
+                          "example": "13800000000"
+                        },
+                        "email": {
+                          "type": "string",
+                          "example": "smith@example.com"
+                        },
+                        "title": {
+                          "type": "string",
+                          "example": "主治医生"
+                        },
+                        "specialty": {
+                          "type": "string",
+                          "example": "外科"
+                        },
+                        "avatar_url": {
+                          "type": "string",
+                          "example": "https://example.com/avatar.jpg"
+                        },
+                        "intro": {
+                          "type": "string",
+                          "example": "擅长宠物外科疾病诊疗"
+                        },
+                        "status": {
+                          "type": "integer",
+                          "example": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "x-apifox-folder": "医生资料",
+        "tags": ["医生资料"],
+        "summary": "更新医生个人信息",
+        "description": "更新当前登录医生的个人资料信息（医生端）",
+        "operationId": "doctorUpdateProfile",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "example": "13800000001"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "newemail@example.com"
+                  },
+                  "avatar_url": {
+                    "type": "string",
+                    "example": "https://example.com/new_avatar.jpg"
+                  },
+                  "intro": {
+                    "type": "string",
+                    "example": "擅长宠物内科疾病诊断"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctors/password": {
+      "put": {
+        "x-apifox-folder": "医生资料",
+        "tags": ["医生资料"],
+        "summary": "修改医生密码",
+        "description": "修改当前登录医生的密码（医生端）",
+        "operationId": "doctorUpdatePassword",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["old_password", "new_password"],
+                "properties": {
+                  "old_password": {
+                    "type": "string",
+                    "example": "password123"
+                  },
+                  "new_password": {
+                    "type": "string",
+                    "example": "newpassword456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "修改成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/profile": {
+      "get": {
+        "x-apifox-folder": "管理员资料",
+        "tags": ["管理员资料"],
+        "summary": "获取管理员个人信息",
+        "description": "获取当前登录管理员的个人资料信息（管理员端）",
+        "operationId": "adminGetProfile",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "username": {
+                          "type": "string",
+                          "example": "admin"
+                        },
+                        "real_name": {
+                          "type": "string",
+                          "example": "Admin User"
+                        },
+                        "phone": {
+                          "type": "string",
+                          "example": "13800000000"
+                        },
+                        "status": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2024-03-29T10:00:00Z"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pets": {
+      "post": {
+        "x-apifox-folder": "宠物管理",
+        "tags": ["宠物管理"],
+        "summary": "新增宠物档案",
+        "description": "为当前登录用户创建一个新的宠物档案",
+        "operationId": "petCreate",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["pet_name"],
+                "properties": {
+                  "pet_name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "description": "宠物名称",
+                    "example": "Fluffy"
+                  },
+                  "pet_type": {
+                    "type": "string",
+                    "description": "宠物类型",
+                    "example": "cat"
+                  },
+                  "avatar_url": {
+                    "type": "string",
+                    "description": "头像地址",
+                    "example": "https://example.com/pet.jpg"
+                  },
+                  "gender": {
+                    "type": "integer",
+                    "enum": [0, 1, 2],
+                    "description": "性别（1公，2母，0未知）",
+                    "example": 1
+                  },
+                  "age": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "年龄",
+                    "example": 3
+                  },
+                  "age_unit": {
+                    "type": "string",
+                    "enum": ["month", "year"],
+                    "description": "年龄单位（month/月，year/岁）",
+                    "example": "year"
+                  },
+                  "breed": {
+                    "type": "string",
+                    "description": "品种",
+                    "example": "波斯猫"
+                  },
+                  "weight": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "体重（kg）",
+                    "example": 4.5
+                  },
+                  "sterilized": {
+                    "type": "integer",
+                    "enum": [0, 1],
+                    "description": "是否绝育（1是，0否）",
+                    "example": 1
+                  },
+                  "remark": {
+                    "type": "string",
+                    "description": "备注",
+                    "example": "性格温和"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "pet_id": {
+                          "type": "integer",
+                          "example": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "x-apifox-folder": "宠物管理",
+        "tags": ["宠物管理"],
+        "summary": "获取宠物列表",
+        "description": "获取当前登录用户的宠物列表，支持分页",
+        "operationId": "petList",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "页码"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            },
+            "description": "每页数量"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "list": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {"type": "integer"},
+                              "pet_name": {"type": "string"},
+                              "pet_type": {"type": "string"},
+                              "avatar_url": {"type": "string"},
+                              "gender": {"type": "integer"},
+                              "age": {"type": "integer"},
+                              "age_unit": {"type": "string"},
+                              "breed": {"type": "string"},
+                              "weight": {"type": "number"},
+                              "sterilized": {"type": "integer"},
+                              "remark": {"type": "string"},
+                              "created_at": {"type": "string", "format": "date-time"}
+                            }
+                          }
+                        },
+                        "total": {"type": "integer"},
+                        "page": {"type": "integer"},
+                        "page_size": {"type": "integer"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pets/{pet_id}": {
+      "get": {
+        "x-apifox-folder": "宠物管理",
+        "tags": ["宠物管理"],
+        "summary": "获取宠物详情",
+        "description": "获取指定宠物的详细信息",
+        "operationId": "petDetail",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pet_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "宠物ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {"type": "integer"},
+                    "message": {"type": "string"},
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {"type": "integer"},
+                        "user_id": {"type": "integer"},
+                        "pet_name": {"type": "string"},
+                        "pet_type": {"type": "string"},
+                        "avatar_url": {"type": "string"},
+                        "gender": {"type": "integer"},
+                        "age": {"type": "integer"},
+                        "age_unit": {"type": "string"},
+                        "breed": {"type": "string"},
+                        "weight": {"type": "number"},
+                        "sterilized": {"type": "integer"},
+                        "remark": {"type": "string"},
+                        "status": {"type": "integer"},
+                        "created_at": {"type": "string", "format": "date-time"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "x-apifox-folder": "宠物管理",
+        "tags": ["宠物管理"],
+        "summary": "修改宠物档案",
+        "description": "更新指定宠物的信息",
+        "operationId": "petUpdate",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pet_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "宠物ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pet_name": {"type": "string"},
+                  "pet_type": {"type": "string"},
+                  "avatar_url": {"type": "string"},
+                  "gender": {"type": "integer"},
+                  "age": {"type": "integer"},
+                  "age_unit": {"type": "string"},
+                  "breed": {"type": "string"},
+                  "weight": {"type": "number"},
+                  "sterilized": {"type": "integer"},
+                  "remark": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {"type": "integer"},
+                    "message": {"type": "string"},
+                    "data": {"type": "object"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "x-apifox-folder": "宠物管理",
+        "tags": ["宠物管理"],
+        "summary": "删除宠物档案",
+        "description": "删除指定宠物的档案",
+        "operationId": "petDelete",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pet_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "宠物ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {"type": "integer"},
+                    "message": {"type": "string"},
+                    "data": {"type": "object"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT 认证令牌，通过登录接口获得"
+      }
+    }
+  }
+}

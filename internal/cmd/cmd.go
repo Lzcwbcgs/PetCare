@@ -10,6 +10,7 @@ import (
 	"github.com/gogf/gf/v2/os/gcmd"
 
 	"PetCare/internal/controller/auth"
+	"PetCare/internal/controller/pet"
 	"PetCare/internal/middleware"
 	"PetCare/internal/model"
 )
@@ -29,6 +30,8 @@ var (
 				userController   = auth.NewUser()
 				doctorController = auth.NewDoctor()
 				adminController  = auth.NewAdmin()
+				petUser          = pet.NewUser()
+				petShared        = pet.NewShared()
 			)
 
 			s.SetAddr(g.Cfg().MustGet(ctx, "server.address", ":8000").String())
@@ -69,6 +72,21 @@ var (
 					group.Bind(
 						adminController,
 					)
+				})
+				group.Group("/pets", func(group *ghttp.RouterGroup) {
+					group.Middleware(middleware.Auth)
+					group.Group("/", func(group *ghttp.RouterGroup) {
+						group.Middleware(middleware.Role("user"))
+						group.Bind(
+							petUser,
+						)
+					})
+					group.Group("/", func(group *ghttp.RouterGroup) {
+						group.Middleware(middleware.Role("user", "doctor"))
+						group.Bind(
+							petShared,
+						)
+					})
 				})
 			})
 			enhanceOpenAPIDoc(s)
