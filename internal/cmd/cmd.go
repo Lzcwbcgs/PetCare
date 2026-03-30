@@ -73,7 +73,7 @@ var (
 					)
 				})
 				group.Group("/pets", func(group *ghttp.RouterGroup) {
-					group.Middleware(middleware.Auth, middleware.Role("user"))
+					group.Middleware(middleware.Auth)
 					group.Bind(
 						petController,
 					)

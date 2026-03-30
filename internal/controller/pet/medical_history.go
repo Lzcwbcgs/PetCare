@@ -11,9 +11,9 @@ import (
 )
 
 func (c *Controller) MedicalHistoryCreate(ctx context.Context, req *v1.MedicalHistoryCreateReq) (res *v1.MedicalHistoryCreateRes, err error) {
-	g.RequestFromCtx(ctx).SetCtxVar(consts.CtxKeyResponseMessage, "创建成功")
+	g.RequestFromCtx(ctx).SetCtxVar(consts.CtxKeyResponseMessage, "新增成功")
 
-	claims, err := authClaimsFromCtx(ctx)
+	claims, err := requirePetRoles(ctx, consts.RoleUser)
 	if err != nil {
 		return nil, err
 	}
@@ -35,25 +35,29 @@ func (c *Controller) MedicalHistoryCreate(ctx context.Context, req *v1.MedicalHi
 func (c *Controller) MedicalHistoryList(ctx context.Context, req *v1.MedicalHistoryListReq) (res *v1.MedicalHistoryListRes, err error) {
 	g.RequestFromCtx(ctx).SetCtxVar(consts.CtxKeyResponseMessage, "success")
 
-	claims, err := authClaimsFromCtx(ctx)
+	claims, err := requirePetRoles(ctx, consts.RoleUser, consts.RoleDoctor)
 	if err != nil {
 		return nil, err
 	}
 
-	var page, size int
+	var (
+		page int
+		size int
+	)
 	if req.Page != nil {
 		page = *req.Page
 	}
-	if req.Size != nil {
-		size = *req.Size
+	if req.PageSize != nil {
+		size = *req.PageSize
 	}
 
 	output, err := service.PetMedicalHistory.List(ctx, service.MedicalHistoryListInput{
-		UserID:    claims.UserID,
-		PetID:     req.PetID,
-		Page:      page,
-		Size:      size,
-		IsCurrent: req.IsCurrent,
+		RequesterUserID: claims.UserID,
+		RequesterRole:   claims.Role,
+		PetID:           req.PetID,
+		Page:            page,
+		Size:            size,
+		IsCurrent:       req.IsCurrent,
 	})
 	if err != nil {
 		return nil, err
@@ -63,19 +67,18 @@ func (c *Controller) MedicalHistoryList(ctx context.Context, req *v1.MedicalHist
 	for _, item := range output.Items {
 		items = append(items, v1.MedicalHistoryItem{
 			ID:          item.ID,
-			PetID:       item.PetID,
 			HistoryType: item.HistoryType,
 			Description: item.Description,
 			DiagnosedAt: item.DiagnosedAt,
 			IsCurrent:   item.IsCurrent,
-			CreatedAt:   item.CreatedAt,
-			UpdatedAt:   item.UpdatedAt,
 		})
 	}
 	return &v1.MedicalHistoryListRes{
-		List:  items,
-		Total: output.Total,
-		Page:  output.Page,
-		Size:  output.Size,
+		List: items,
+		Pagination: v1.Pagination{
+			Page:     output.Page,
+			PageSize: output.Size,
+			Total:    output.Total,
+		},
 	}, nil
 }

@@ -11,9 +11,9 @@ import (
 )
 
 func (c *Controller) AllergyCreate(ctx context.Context, req *v1.AllergyCreateReq) (res *v1.AllergyCreateRes, err error) {
-	g.RequestFromCtx(ctx).SetCtxVar(consts.CtxKeyResponseMessage, "创建成功")
+	g.RequestFromCtx(ctx).SetCtxVar(consts.CtxKeyResponseMessage, "新增成功")
 
-	claims, err := authClaimsFromCtx(ctx)
+	claims, err := requirePetRoles(ctx, consts.RoleUser)
 	if err != nil {
 		return nil, err
 	}
@@ -35,25 +35,29 @@ func (c *Controller) AllergyCreate(ctx context.Context, req *v1.AllergyCreateReq
 func (c *Controller) AllergyList(ctx context.Context, req *v1.AllergyListReq) (res *v1.AllergyListRes, err error) {
 	g.RequestFromCtx(ctx).SetCtxVar(consts.CtxKeyResponseMessage, "success")
 
-	claims, err := authClaimsFromCtx(ctx)
+	claims, err := requirePetRoles(ctx, consts.RoleUser, consts.RoleDoctor)
 	if err != nil {
 		return nil, err
 	}
 
-	var page, size int
+	var (
+		page int
+		size int
+	)
 	if req.Page != nil {
 		page = *req.Page
 	}
-	if req.Size != nil {
-		size = *req.Size
+	if req.PageSize != nil {
+		size = *req.PageSize
 	}
 
 	output, err := service.PetAllergy.List(ctx, service.AllergyListInput{
-		UserID:        claims.UserID,
-		PetID:         req.PetID,
-		Page:          page,
-		Size:          size,
-		SeverityLevel: req.SeverityLevel,
+		RequesterUserID: claims.UserID,
+		RequesterRole:   claims.Role,
+		PetID:           req.PetID,
+		Page:            page,
+		Size:            size,
+		SeverityLevel:   req.SeverityLevel,
 	})
 	if err != nil {
 		return nil, err
@@ -63,19 +67,18 @@ func (c *Controller) AllergyList(ctx context.Context, req *v1.AllergyListReq) (r
 	for _, item := range output.Items {
 		items = append(items, v1.AllergyItem{
 			ID:                 item.ID,
-			PetID:              item.PetID,
 			Allergen:           item.Allergen,
 			SymptomDescription: item.SymptomDescription,
 			SeverityLevel:      item.SeverityLevel,
 			Remark:             item.Remark,
-			CreatedAt:          item.CreatedAt,
-			UpdatedAt:          item.UpdatedAt,
 		})
 	}
 	return &v1.AllergyListRes{
-		List:  items,
-		Total: output.Total,
-		Page:  output.Page,
-		Size:  output.Size,
+		List: items,
+		Pagination: v1.Pagination{
+			Page:     output.Page,
+			PageSize: output.Size,
+			Total:    output.Total,
+		},
 	}, nil
 }

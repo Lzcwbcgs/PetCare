@@ -20,11 +20,12 @@ type (
 		IsCurrent   *int
 	}
 	MedicalHistoryListInput struct {
-		UserID    int64
-		PetID     int64
-		Page      int
-		Size      int
-		IsCurrent *int
+		RequesterUserID int64
+		RequesterRole   string
+		PetID           int64
+		Page            int
+		Size            int
+		IsCurrent       *int
 	}
 	MedicalHistoryCreateOutput struct {
 		ID int64
@@ -94,7 +95,7 @@ func (s petMedicalHistoryService) Create(ctx context.Context, in MedicalHistoryC
 }
 
 func (s petMedicalHistoryService) List(ctx context.Context, in MedicalHistoryListInput) (*MedicalHistoryListOutput, error) {
-	if err := checkPetOwner(ctx, in.PetID, in.UserID); err != nil {
+	if err := checkPetReadable(ctx, in.PetID, in.RequesterUserID, in.RequesterRole); err != nil {
 		return nil, err
 	}
 
@@ -103,7 +104,7 @@ func (s petMedicalHistoryService) List(ctx context.Context, in MedicalHistoryLis
 		page = 1
 	}
 	if size <= 0 {
-		size = 20
+		size = 10
 	}
 	if size > 100 {
 		size = 100
@@ -143,4 +144,3 @@ func (s petMedicalHistoryService) List(ctx context.Context, in MedicalHistoryLis
 	}
 	return &MedicalHistoryListOutput{Items: items, Total: total, Page: page, Size: size}, nil
 }
-

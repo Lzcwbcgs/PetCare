@@ -23,10 +23,12 @@ type (
 		Remark          *string
 	}
 	VaccinationListInput struct {
-		UserID int64
-		PetID  int64
-		Page   int
-		Size   int
+		RequesterUserID int64
+		RequesterRole   string
+		PetID           int64
+		Page            int
+		Size            int
+		VaccineName     *string
 	}
 	VaccinationCreateOutput struct {
 		ID int64
@@ -103,7 +105,7 @@ func (s petVaccinationService) Create(ctx context.Context, in VaccinationCreateI
 }
 
 func (s petVaccinationService) List(ctx context.Context, in VaccinationListInput) (*VaccinationListOutput, error) {
-	if err := checkPetOwner(ctx, in.PetID, in.UserID); err != nil {
+	if err := checkPetReadable(ctx, in.PetID, in.RequesterUserID, in.RequesterRole); err != nil {
 		return nil, err
 	}
 
@@ -112,7 +114,7 @@ func (s petVaccinationService) List(ctx context.Context, in VaccinationListInput
 		page = 1
 	}
 	if size <= 0 {
-		size = 20
+		size = 10
 	}
 	if size > 100 {
 		size = 100
@@ -120,6 +122,9 @@ func (s petVaccinationService) List(ctx context.Context, in VaccinationListInput
 
 	cols := dao.PetVaccinationRecord.Columns()
 	model := dao.PetVaccinationRecord.Ctx(ctx).Where(cols.PetId, in.PetID)
+	if in.VaccineName != nil && strings.TrimSpace(*in.VaccineName) != "" {
+		model = model.WhereLike(cols.VaccineName, "%"+strings.TrimSpace(*in.VaccineName)+"%")
+	}
 
 	total, err := model.Clone().Count()
 	if err != nil {
@@ -132,7 +137,8 @@ func (s petVaccinationService) List(ctx context.Context, in VaccinationListInput
 
 	items := make([]VaccinationItem, 0, len(records))
 	for _, r := range records {
-		vacDate, nextDate := "", ""
+		vacDate := ""
+		nextDate := ""
 		if !r[cols.VaccinationDate].IsNil() {
 			vacDate = r[cols.VaccinationDate].GTime().Format(dateLayout)
 		}
@@ -164,4 +170,23 @@ func checkPetOwner(ctx context.Context, petID, userID int64) error {
 		return consts.NewNotFoundError("宠物不存在")
 	}
 	return nil
+}
+
+func checkPetReadable(ctx context.Context, petID, requesterUserID int64, requesterRole string) error {
+	switch NormalizeRole(requesterRole) {
+	case consts.RoleUser:
+		return checkPetOwner(ctx, petID, requesterUserID)
+	case consts.RoleDoctor:
+		cols := dao.Pet.Columns()
+		count, err := dao.Pet.Ctx(ctx).Where(cols.Id, petID).Count()
+		if err != nil {
+			return consts.WrapInternalError(err, "查询宠物信息失败")
+		}
+		if count == 0 {
+			return consts.NewNotFoundError("宠物不存在")
+		}
+		return nil
+	default:
+		return consts.NewForbiddenError("")
+	}
 }

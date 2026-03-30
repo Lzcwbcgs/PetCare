@@ -11,9 +11,9 @@ import (
 )
 
 func (c *Controller) VaccinationCreate(ctx context.Context, req *v1.VaccinationCreateReq) (res *v1.VaccinationCreateRes, err error) {
-	g.RequestFromCtx(ctx).SetCtxVar(consts.CtxKeyResponseMessage, "创建成功")
+	g.RequestFromCtx(ctx).SetCtxVar(consts.CtxKeyResponseMessage, "新增成功")
 
-	claims, err := authClaimsFromCtx(ctx)
+	claims, err := requirePetRoles(ctx, consts.RoleUser)
 	if err != nil {
 		return nil, err
 	}
@@ -36,24 +36,29 @@ func (c *Controller) VaccinationCreate(ctx context.Context, req *v1.VaccinationC
 func (c *Controller) VaccinationList(ctx context.Context, req *v1.VaccinationListReq) (res *v1.VaccinationListRes, err error) {
 	g.RequestFromCtx(ctx).SetCtxVar(consts.CtxKeyResponseMessage, "success")
 
-	claims, err := authClaimsFromCtx(ctx)
+	claims, err := requirePetRoles(ctx, consts.RoleUser, consts.RoleDoctor)
 	if err != nil {
 		return nil, err
 	}
 
-	var page, size int
+	var (
+		page int
+		size int
+	)
 	if req.Page != nil {
 		page = *req.Page
 	}
-	if req.Size != nil {
-		size = *req.Size
+	if req.PageSize != nil {
+		size = *req.PageSize
 	}
 
 	output, err := service.PetVaccination.List(ctx, service.VaccinationListInput{
-		UserID: claims.UserID,
-		PetID:  req.PetID,
-		Page:   page,
-		Size:   size,
+		RequesterUserID: claims.UserID,
+		RequesterRole:   claims.Role,
+		PetID:           req.PetID,
+		Page:            page,
+		Size:            size,
+		VaccineName:     req.VaccineName,
 	})
 	if err != nil {
 		return nil, err
@@ -63,20 +68,18 @@ func (c *Controller) VaccinationList(ctx context.Context, req *v1.VaccinationLis
 	for _, item := range output.Items {
 		items = append(items, v1.VaccinationItem{
 			ID:              item.ID,
-			PetID:           item.PetID,
 			VaccineName:     item.VaccineName,
 			VaccinationDate: item.VaccinationDate,
 			NextDueDate:     item.NextDueDate,
 			HospitalName:    item.HospitalName,
-			Remark:          item.Remark,
-			CreatedAt:       item.CreatedAt,
-			UpdatedAt:       item.UpdatedAt,
 		})
 	}
 	return &v1.VaccinationListRes{
-		List:  items,
-		Total: output.Total,
-		Page:  output.Page,
-		Size:  output.Size,
+		List: items,
+		Pagination: v1.Pagination{
+			Page:     output.Page,
+			PageSize: output.Size,
+			Total:    output.Total,
+		},
 	}, nil
 }

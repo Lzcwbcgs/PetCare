@@ -16,3 +16,14 @@ func authClaimsFromCtx(ctx context.Context) (*service.AuthClaims, error) {
 	}
 	return claims, nil
 }
+
+func requirePetRoles(ctx context.Context, roles ...string) (*service.AuthClaims, error) {
+	claims, err := authClaimsFromCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !claims.HasRole(roles...) {
+		return nil, consts.NewForbiddenError("")
+	}
+	return claims, nil
+}

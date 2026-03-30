@@ -19,11 +19,12 @@ type (
 		Remark             *string
 	}
 	AllergyListInput struct {
-		UserID        int64
-		PetID         int64
-		Page          int
-		Size          int
-		SeverityLevel *int
+		RequesterUserID int64
+		RequesterRole   string
+		PetID           int64
+		Page            int
+		Size            int
+		SeverityLevel   *int
 	}
 	AllergyCreateOutput struct {
 		ID int64
@@ -88,7 +89,7 @@ func (s petAllergyService) Create(ctx context.Context, in AllergyCreateInput) (*
 }
 
 func (s petAllergyService) List(ctx context.Context, in AllergyListInput) (*AllergyListOutput, error) {
-	if err := checkPetOwner(ctx, in.PetID, in.UserID); err != nil {
+	if err := checkPetReadable(ctx, in.PetID, in.RequesterUserID, in.RequesterRole); err != nil {
 		return nil, err
 	}
 
@@ -97,7 +98,7 @@ func (s petAllergyService) List(ctx context.Context, in AllergyListInput) (*Alle
 		page = 1
 	}
 	if size <= 0 {
-		size = 20
+		size = 10
 	}
 	if size > 100 {
 		size = 100
@@ -128,7 +129,7 @@ func (s petAllergyService) List(ctx context.Context, in AllergyListInput) (*Alle
 			SeverityLevel:      r[cols.SeverityLevel].Int(),
 			Remark:             r[cols.Remark].String(),
 			CreatedAt:          r[cols.CreatedAt].GTime().Format(petTimeLayout),
-			UpdatedAt:			r[cols.UpdatedAt].GTime().Format(petTimeLayout),
+			UpdatedAt:          r[cols.UpdatedAt].GTime().Format(petTimeLayout),
 		})
 	}
 	return &AllergyListOutput{Items: items, Total: total, Page: page, Size: size}, nil
