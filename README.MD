@@ -2,7 +2,7 @@
 
 宠物医疗协同管理平台后端项目，基于 GoFrame v2 开发。
 
-当前仓库已经完成了基础工程搭建、数据库模型生成、认证模块增强，以及第二阶段的用户/医生/管理员资料模块。现阶段代码可以正常构建和测试，后续将继续按接口文档推进第三阶段及之后的业务模块。
+当前仓库已经完成基础工程搭建、数据库模型生成、认证模块、资料模块，以及第三阶段中的宠物档案/病史/疫苗/过敏记录模块。项目当前可以正常构建和测试，后续将继续推进预约、病历报告、通知与 AI 相关能力。
 
 ## 技术栈
 
@@ -13,28 +13,32 @@
 
 ## 当前开发进度
 
-### 1. 基础工程整理
+### 1. 基础工程
 
 - 已接入 GoFrame 标准启动方式
-- 已固定读取业务配置文件 [manifest/config/config.yaml](./manifest/config/config.yaml)
+- 固定读取业务配置文件 [manifest/config/config.yaml](/d:/code/gocode/review/PetCare/manifest/config/config.yaml)
 - 已启用 Swagger / OpenAPI
 - 已统一接口响应结构为 `code / message / data`
+- 已接入 MySQL 驱动和资源打包入口
 
-### 2. 数据模型生成
+### 2. 数据模型
 
-已基于真实数据库通过 `gf gen dao` 生成标准模型层：
+项目已基于真实数据库通过 `gf gen dao` 生成标准模型层：
 
-- [internal/dao](./internal/dao)
-- [internal/model/do](./internal/model/do)
-- [internal/model/entity](./internal/model/entity)
+- [internal/dao](/d:/code/gocode/review/PetCare/internal/dao)
+- [internal/model/do](/d:/code/gocode/review/PetCare/internal/model/do)
+- [internal/model/entity](/d:/code/gocode/review/PetCare/internal/model/entity)
 
-当前已生成的主要表模型包括：
+当前已生成并被业务使用的主要数据表包括：
 
 - `user`
 - `doctor`
 - `admin`
 - `hospital`
 - `pet`
+- `pet_medical_history`
+- `pet_vaccination_record`
+- `pet_allergy_record`
 - `appointment`
 - `medical_record`
 - `medical_report`
@@ -43,52 +47,42 @@
 - `ai_message`
 - `ai_analysis_record`
 
-### 3. 第一阶段：认证模块与测试基建
+### 3. 第一阶段：认证模块
 
-当前已完成接口：
+已完成接口：
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
 
-当前认证能力包括：
+已具备能力：
 
 - 用户注册
 - 用户 / 医生 / 管理员统一登录
-- JWT 令牌签发与解析
+- JWT 签发与解析
 - Bearer Token 登录态校验
 - 角色鉴权中间件
 - 获取当前登录信息
 - 注销后当前 Token 立即失效
-- 账号被禁用后，已登录接口立即拒绝访问
-- 更清晰的错误码与异常定义
+- 账号禁用后已登录接口立即拒绝访问
 - 认证相关单元测试、控制器测试、中间件测试
 
-认证与测试基建相关核心文件：
+核心文件：
 
-- API 定义: [api/auth/v1/auth.go](./api/auth/v1/auth.go)
-- 路由入口: [internal/cmd/cmd.go](./internal/cmd/cmd.go)
-- 控制器: [internal/controller/auth/auth.go](./internal/controller/auth/auth.go)
-- 认证服务接口: [internal/service/auth.go](./internal/service/auth.go)
-- 认证服务实现: [internal/service/auth_impl.go](./internal/service/auth_impl.go)
-- Token 处理: [internal/service/auth_token.go](./internal/service/auth_token.go)
-- 角色能力: [internal/service/auth_role.go](./internal/service/auth_role.go)
-- 配置读取: [internal/service/auth_config.go](./internal/service/auth_config.go)
-- 密码处理: [internal/service/auth_password.go](./internal/service/auth_password.go)
-- 鉴权中间件: [internal/middleware/auth.go](./internal/middleware/auth.go)
-- 角色中间件: [internal/middleware/role.go](./internal/middleware/role.go)
-- 统一响应中间件: [internal/middleware/response.go](./internal/middleware/response.go)
-- 测试配置: [utility/test_config.go](./utility/test_config.go)
-- 认证控制器测试: [internal/controller/auth/auth_test.go](./internal/controller/auth/auth_test.go)
-- 中间件测试: [internal/middleware/auth_test.go](./internal/middleware/auth_test.go)
-- Token 测试: [internal/service/auth_token_test.go](./internal/service/auth_token_test.go)
-- 认证服务测试: [internal/service/auth_impl_test.go](./internal/service/auth_impl_test.go)
-- 角色测试: [internal/service/auth_role_test.go](./internal/service/auth_role_test.go)
+- 路由入口 [internal/cmd/cmd.go](/d:/code/gocode/review/PetCare/internal/cmd/cmd.go)
+- API 定义 [api/auth/v1/auth.go](/d:/code/gocode/review/PetCare/api/auth/v1/auth.go)
+- 控制器 [internal/controller/auth/auth.go](/d:/code/gocode/review/PetCare/internal/controller/auth/auth.go)
+- 认证服务接口 [internal/service/auth.go](/d:/code/gocode/review/PetCare/internal/service/auth.go)
+- 认证服务实现 [internal/service/auth_impl.go](/d:/code/gocode/review/PetCare/internal/service/auth_impl.go)
+- Token 处理 [internal/service/auth_token.go](/d:/code/gocode/review/PetCare/internal/service/auth_token.go)
+- 角色能力 [internal/service/auth_role.go](/d:/code/gocode/review/PetCare/internal/service/auth_role.go)
+- 认证中间件 [internal/middleware/auth.go](/d:/code/gocode/review/PetCare/internal/middleware/auth.go)
+- 角色中间件 [internal/middleware/role.go](/d:/code/gocode/review/PetCare/internal/middleware/role.go)
 
 ### 4. 第二阶段：资料模块
 
-当前已完成接口：
+已完成接口：
 
 - `GET /api/users/profile`
 - `PUT /api/users/profile`
@@ -98,28 +92,66 @@
 - `PUT /api/doctors/password`
 - `GET /api/admin/profile`
 
-当前资料模块能力包括：
+已具备能力：
 
 - 用户个人资料查询、编辑、密码修改
 - 医生个人资料查询、编辑、密码修改
 - 管理员个人资料查询
 - 资料接口按角色路由隔离
-- 资料模块控制器级测试覆盖
+- 控制器级测试覆盖
 
-资料模块相关核心文件：
+核心文件：
 
-- 用户 API: [api/auth/v1/profile_user.go](./api/auth/v1/profile_user.go)
-- 医生 API: [api/auth/v1/profile_doctor.go](./api/auth/v1/profile_doctor.go)
-- 管理员 API: [api/auth/v1/profile_admin.go](./api/auth/v1/profile_admin.go)
-- 用户控制器: [internal/controller/auth/profile_user.go](./internal/controller/auth/profile_user.go)
-- 医生控制器: [internal/controller/auth/profile_doctor.go](./internal/controller/auth/profile_doctor.go)
-- 管理员控制器: [internal/controller/auth/profile_admin.go](./internal/controller/auth/profile_admin.go)
-- 用户服务: [internal/service/profile_user.go](./internal/service/profile_user.go)
-- 医生服务: [internal/service/profile_doctor.go](./internal/service/profile_doctor.go)
-- 管理员服务: [internal/service/profile_admin.go](./internal/service/profile_admin.go)
-- 资料模块测试: [internal/controller/auth/profile_test.go](./internal/controller/auth/profile_test.go)
+- 用户 API [api/auth/v1/profile_user.go](/d:/code/gocode/review/PetCare/api/auth/v1/profile_user.go)
+- 医生 API [api/auth/v1/profile_doctor.go](/d:/code/gocode/review/PetCare/api/auth/v1/profile_doctor.go)
+- 管理员 API [api/auth/v1/profile_admin.go](/d:/code/gocode/review/PetCare/api/auth/v1/profile_admin.go)
+- 资料控制器 [internal/controller/auth](/d:/code/gocode/review/PetCare/internal/controller/auth)
+- 资料服务 [internal/service/profile_user.go](/d:/code/gocode/review/PetCare/internal/service/profile_user.go)
+- 资料服务 [internal/service/profile_doctor.go](/d:/code/gocode/review/PetCare/internal/service/profile_doctor.go)
+- 资料服务 [internal/service/profile_admin.go](/d:/code/gocode/review/PetCare/internal/service/profile_admin.go)
 
-## 当前已实现接口清单
+### 5. 第三阶段：宠物档案模块
+
+当前已完成接口：
+
+- `GET /api/pets`
+- `POST /api/pets`
+- `GET /api/pets/{pet_id}`
+- `PUT /api/pets/{pet_id}`
+- `DELETE /api/pets/{pet_id}`
+- `POST /api/pets/{pet_id}/medical-histories`
+- `GET /api/pets/{pet_id}/medical-histories`
+- `POST /api/pets/{pet_id}/vaccinations`
+- `GET /api/pets/{pet_id}/vaccinations`
+- `POST /api/pets/{pet_id}/allergies`
+- `GET /api/pets/{pet_id}/allergies`
+
+当前已具备能力：
+
+- 用户维度的宠物档案增删改查
+- 宠物病史记录新增与分页查询
+- 宠物疫苗记录新增与分页查询
+- 宠物过敏记录新增与分页查询
+- 用户仅可操作自己的宠物数据
+- 医生可读取宠物病史、疫苗、过敏记录
+- 宠物列表支持分页、名称模糊查询、类型/状态筛选
+
+核心文件：
+
+- 宠物 API [api/pet/v1/pet.go](/d:/code/gocode/review/PetCare/api/pet/v1/pet.go)
+- 病史 API [api/pet/v1/medical_history.go](/d:/code/gocode/review/PetCare/api/pet/v1/medical_history.go)
+- 疫苗 API [api/pet/v1/vaccination.go](/d:/code/gocode/review/PetCare/api/pet/v1/vaccination.go)
+- 过敏 API [api/pet/v1/allergy.go](/d:/code/gocode/review/PetCare/api/pet/v1/allergy.go)
+- 宠物控制器 [internal/controller/pet/pet.go](/d:/code/gocode/review/PetCare/internal/controller/pet/pet.go)
+- 病史控制器 [internal/controller/pet/medical_history.go](/d:/code/gocode/review/PetCare/internal/controller/pet/medical_history.go)
+- 疫苗控制器 [internal/controller/pet/vaccination.go](/d:/code/gocode/review/PetCare/internal/controller/pet/vaccination.go)
+- 过敏控制器 [internal/controller/pet/allergy.go](/d:/code/gocode/review/PetCare/internal/controller/pet/allergy.go)
+- 宠物服务 [internal/service/pet.go](/d:/code/gocode/review/PetCare/internal/service/pet.go)
+- 病史服务 [internal/service/pet_medical_history.go](/d:/code/gocode/review/PetCare/internal/service/pet_medical_history.go)
+- 疫苗服务 [internal/service/pet_vaccination.go](/d:/code/gocode/review/PetCare/internal/service/pet_vaccination.go)
+- 过敏服务 [internal/service/pet_allergy.go](/d:/code/gocode/review/PetCare/internal/service/pet_allergy.go)
+
+## 当前接口清单
 
 ### 认证模块
 
@@ -128,53 +160,73 @@
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
 
-### 用户端
+### 用户资料
 
 - `GET /api/users/profile`
 - `PUT /api/users/profile`
 - `PUT /api/users/password`
 
-### 医生端
+### 医生资料
 
 - `GET /api/doctors/profile`
 - `PUT /api/doctors/profile`
 - `PUT /api/doctors/password`
 
-### 管理端
+### 管理员资料
 
 - `GET /api/admin/profile`
 
-## 接口文档地址
+### 宠物档案
+
+- `GET /api/pets`
+- `POST /api/pets`
+- `GET /api/pets/{pet_id}`
+- `PUT /api/pets/{pet_id}`
+- `DELETE /api/pets/{pet_id}`
+
+### 宠物病史
+
+- `POST /api/pets/{pet_id}/medical-histories`
+- `GET /api/pets/{pet_id}/medical-histories`
+
+### 宠物疫苗
+
+- `POST /api/pets/{pet_id}/vaccinations`
+- `GET /api/pets/{pet_id}/vaccinations`
+
+### 宠物过敏
+
+- `POST /api/pets/{pet_id}/allergies`
+- `GET /api/pets/{pet_id}/allergies`
+
+## 接口文档
 
 项目启动后可访问：
 
 - Swagger UI: `http://127.0.0.1:8000/swagger/`
 - OpenAPI JSON: `http://127.0.0.1:8000/api.json`
 
-接口设计基准文档位于：
-
-- [pet_medical_api_documentation.md](../../api/pet_medical_api_documentation.md)
-- [pet_medical_system_standard.sql](../../数据库&关键技术/pet_medical_system_standard.sql)
+OpenAPI 由 [internal/cmd/cmd.go](/d:/code/gocode/review/PetCare/internal/cmd/cmd.go) 在启动时注册。
 
 ## 本地启动
 
-### 1. 配置数据库
+### 1. 准备配置
 
-修改业务配置文件：
+业务配置文件：
 
-- [manifest/config/config.yaml](./manifest/config/config.yaml)
+- [manifest/config/config.yaml](/d:/code/gocode/review/PetCare/manifest/config/config.yaml)
 
-示例：
+当前默认配置包含：
 
-```yaml
-database:
-  default:
-    link: "mysql:root:password@tcp(127.0.0.1:3306)/pet_medical_system"
-```
+- 服务监听地址 `:8000`
+- Swagger 路径 `/swagger`
+- OpenAPI 路径 `/api.json`
+- 默认 MySQL 连接
+- JWT 配置项 `jwtSecret / jwtIssuer / expireHours`
 
-如需重新生成模型，开发工具配置位于：
+如需重新生成 DAO，开发工具配置位于：
 
-- [hack/config.yaml](./hack/config.yaml)
+- [hack/config.yaml](/d:/code/gocode/review/PetCare/hack/config.yaml)
 
 ### 2. 启动项目
 
@@ -188,25 +240,27 @@ go run .
 gf run main.go
 ```
 
-默认地址：
+默认访问地址：
 
 ```text
 http://127.0.0.1:8000
 ```
 
-## 重新生成数据模型
+## 常用开发命令
 
-当数据库结构发生变更后，可执行：
+项目根目录的 [Makefile](/d:/code/gocode/review/PetCare/Makefile) 引入了 [hack/hack.mk](/d:/code/gocode/review/PetCare/hack/hack.mk) 和 [hack/hack-cli.mk](/d:/code/gocode/review/PetCare/hack/hack-cli.mk)，可以直接使用：
 
-```bash
-gf gen dao
-```
+- `make build` 使用 GoFrame 构建二进制
+- `make dao` 根据数据库重新生成 DAO / DO / Entity
+- `make ctrl` 解析 API 生成控制器骨架
+- `make service` 生成 Service 接口代码
+- `make enums` 生成枚举文件
+- `make pb` 生成 protobuf 相关代码
+- `make image` 构建 Docker 镜像
 
-对应配置文件：
+如果本机没有安装 `gf`，`make` 会先尝试自动安装 GoFrame CLI。
 
-- [hack/config.yaml](./hack/config.yaml)
-
-## 当前目录说明
+## 目录说明
 
 ```text
 api/                   接口请求与响应定义
@@ -219,80 +273,51 @@ internal/model/do/     GoFrame 生成的 DO 模型
 internal/model/entity/ GoFrame 生成的实体模型
 manifest/config/       业务配置
 hack/                  开发工具配置
+resource/              项目资源文件
 utility/               测试与通用辅助
 ```
 
 ## 已验证内容
 
-当前代码已经验证通过：
+当前已实际验证通过：
 
 - `go build ./...`
 - `go test ./...`
 
-认证与资料模块已完成的验证点包括：
+当前测试覆盖情况：
 
-- 注册成功
-- 统一登录成功
-- 获取当前登录信息成功
-- 角色鉴权校验成功
-- 注销后 Token 失效
-- 禁用账号无法继续访问已登录接口
-- 用户/医生/管理员资料接口链路测试通过
+- 认证控制器测试 [internal/controller/auth/auth_test.go](/d:/code/gocode/review/PetCare/internal/controller/auth/auth_test.go)
+- 资料控制器测试 [internal/controller/auth/profile_test.go](/d:/code/gocode/review/PetCare/internal/controller/auth/profile_test.go)
+- 认证中间件测试 [internal/middleware/auth_test.go](/d:/code/gocode/review/PetCare/internal/middleware/auth_test.go)
+- 认证服务测试 [internal/service/auth_impl_test.go](/d:/code/gocode/review/PetCare/internal/service/auth_impl_test.go)
+- Token 测试 [internal/service/auth_token_test.go](/d:/code/gocode/review/PetCare/internal/service/auth_token_test.go)
+- 角色能力测试 [internal/service/auth_role_test.go](/d:/code/gocode/review/PetCare/internal/service/auth_role_test.go)
 
-## 后续开发计划
+说明：
 
-后续将继续按接口文档逐阶段推进：
+- 当前宠物档案相关模块已完成实现并通过 `go test ./...` 编译级验证
+- `internal/controller/pet` 暂无独立测试文件，后续建议补充控制器和服务层测试
 
-### 第一阶段 `[已完成]`
+## 后续计划
 
-- 继续打磨认证模块
-- 增加角色鉴权能力
-- 增加更清晰的错误码与异常定义
-- 补充认证相关测试
-
-### 第二阶段 `[已完成]`
-
-- 用户资料模块
-- 医生资料模块
-- 管理员资料模块
-
-### 第三阶段 `[下一步]`
-
-- 宠物档案模块
-- 宠物病史 / 疫苗 / 过敏记录模块
-
-### 第四阶段
+下一阶段建议继续推进：
 
 - 预约模块
-- 病历与报告模块
+- 病历与医疗报告模块
 - 通知模块
-
-### 第五阶段
-
-- AI 会话模块
-- AI 分析记录模块
-- 操作日志模块
-
-## 当前仍待完善
-
-虽然认证模块和资料模块已经可用，但距离完整商用版还有差距，后续仍需继续补强：
-
-- 第三阶段及后续业务模块尚未落地
-- 更完善的日志与审计能力
-- 更严格的参数校验与安全校验
-- 更完整的 Token 刷新 / 失效策略
-- 更多集成测试与真实数据库联调
-- 数据库迁移脚本与初始化数据
+- AI 会话与分析记录模块
+- 操作日志与审计能力
+- 更完善的数据库迁移与初始化脚本
 - Docker / 部署流程完善
 
 ## 开发说明
 
-当前项目开发策略是：
+当前项目开发策略：
 
-- 先用真实数据库生成标准模型
-- 再基于 `dao / do / entity` 实现业务
-- 不手改生成代码
+- 先基于真实数据库生成标准模型
+- 再基于 `dao / do / entity` 编写业务逻辑
+- 尽量不手改生成代码
 - 业务逻辑统一放在 `service/`
-- 每完成一个模块，同步补齐 Swagger、响应规范、配置和测试
+- 每完成一个模块，同步补齐路由、Swagger、响应规范、配置和测试
 
-后续将继续严格按照接口文档和数据库结构文档推进，而不是先随手写功能再回头补结构。
+当前 README 已按仓库截至 2026-03-30 的实际代码状态更新。
