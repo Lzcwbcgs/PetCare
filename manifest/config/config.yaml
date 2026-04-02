@@ -18,3 +18,31 @@ auth:
   jwtSecret: "petcare-dev-secret"
   jwtIssuer: "petcare"
   expireHours: 24
+
+ai:
+  defaultProvider: "api"
+  requestTimeoutSeconds: 120
+  historyLimit: 20
+  systemPrompt: ""
+  providers:
+    api:
+      baseUrl: "https://api.openai.com/v1"
+      apiKey: ""
+      chatModel: "gpt-4o-mini"
+      embeddingModel: "text-embedding-3-small"
+    local:
+      engine: "ollama"
+      baseUrl: "http://127.0.0.1:11434"
+      chatModel: "qwen2.5:7b"
+      embeddingModel: "bge-m3"
+
+rag:
+  enabled: true
+  topK: 4
+  chunkSize: 700
+  chunkOverlap: 120
+  vectorStore:
+    type: "qdrant"
+    qdrant:
+      baseUrl: "http://127.0.0.1:6333"
+      collection: "petcare_knowledge"

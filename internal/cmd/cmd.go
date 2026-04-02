@@ -4,6 +4,7 @@ import (
 	"context"
 
 	adminctl "PetCare/internal/controller/admin"
+	aictl "PetCare/internal/controller/ai"
 	appointmentctl "PetCare/internal/controller/appointment"
 	commonctl "PetCare/internal/controller/common"
 	doctorctl "PetCare/internal/controller/doctor"
@@ -31,7 +32,9 @@ var (
 
 			var (
 				s                       = g.Server()
+				aiController            = aictl.New()
 				appointmentController   = appointmentctl.New()
+				doctorAICtl             = doctorctl.NewAI()
 				doctorAppointmentCtl    = doctorctl.NewAppointment()
 				doctorMedicalRecordCtl  = doctorctl.NewMedicalRecord()
 				doctorMedicalReportCtl  = doctorctl.NewReport()
@@ -43,7 +46,9 @@ var (
 				adminController         = auth.NewAdmin()
 				adminDoctorController   = adminctl.NewDoctor()
 				adminHospitalController = adminctl.NewHospital()
+				adminKnowledgeCtl       = adminctl.NewKnowledge()
 				adminNotificationCtl    = adminctl.NewNotification()
+				adminOperationLogCtl    = adminctl.NewOperationLog()
 				commonController        = commonctl.New()
 				medicalRecordController = medicalrecordctl.New()
 				notificationController  = notificationctl.New()
@@ -99,19 +104,33 @@ var (
 						doctorNotificationCtl,
 					)
 				})
+				group.Group("/doctor/ai", func(group *ghttp.RouterGroup) {
+					group.Middleware(middleware.Auth, middleware.Role("doctor"))
+					group.Bind(
+						doctorAICtl,
+					)
+				})
 				group.Group("/admin", func(group *ghttp.RouterGroup) {
 					group.Middleware(middleware.Auth, middleware.Role("admin"))
 					group.Bind(
 						adminController,
 						adminDoctorController,
 						adminHospitalController,
+						adminKnowledgeCtl,
 						adminNotificationCtl,
+						adminOperationLogCtl,
 					)
 				})
 				group.Group("/pets", func(group *ghttp.RouterGroup) {
 					group.Middleware(middleware.Auth)
 					group.Bind(
 						petController,
+					)
+				})
+				group.Group("/ai", func(group *ghttp.RouterGroup) {
+					group.Middleware(middleware.Auth)
+					group.Bind(
+						aiController,
 					)
 				})
 				group.Group("/appointments", func(group *ghttp.RouterGroup) {
