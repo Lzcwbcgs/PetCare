@@ -79,7 +79,7 @@ func (dao *PetMedicalHistoryDao) Ctx(ctx context.Context) *gdb.Model {
 	for _, handler := range dao.handlers {
 		model = handler(model)
 	}
-	return model.Ctx(ctx)
+	return model.Safe().Ctx(ctx)
 }
 
 // Transaction wraps the transaction logic using function f.
