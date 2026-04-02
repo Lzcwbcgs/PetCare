@@ -17,10 +17,14 @@ type AiAnalysisRecord struct {
 	MedicalRecordId  any // 关联病历ID
 	AnalysisType     any // 分析类型：1病历总结，2症状归纳，3风险提示，4健康建议
 	InputSource      any // 输入来源：1AI对话，2病历记录，3体检数据，4综合数据
+	SummaryTitle     any // 分析标题
 	AnalysisResult   any // 分析结果
 	RuleBasedResult  any // 规则分析结果
 	LlmBasedResult   any // 大模型分析结果
 	RiskLevel        any // 风险等级：1低，2中，3高
+	ConfidenceScore  any // 置信度分数，0-100
+	ReferenceChunks  any // 引用知识片段信息
+	ExtraMetadata    any // 扩展元数据
 	ReviewedByDoctor any // 医生是否已审核：1是，0否
 	CreatedAt        any // 创建时间
 }
