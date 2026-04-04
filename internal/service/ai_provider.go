@@ -86,7 +86,7 @@ func aiDefaultChatModel(ctx context.Context, providerType string) string {
 	case aiProviderTypeLocal:
 		return aiConfigString(ctx, "ai.providers.local.chatModel", "qwen2.5:7b")
 	default:
-		return aiConfigString(ctx, "ai.providers.api.chatModel", "gpt-4o-mini")
+		return aiConfigString(ctx, "ai.providers.api.chatModel", "deepseek-chat")
 	}
 }
 
@@ -184,6 +184,10 @@ func aiQdrantCollection(ctx context.Context) string {
 		return "petcare_knowledge"
 	}
 	return name
+}
+
+func aiQdrantAPIKey(ctx context.Context) string {
+	return strings.TrimSpace(aiConfigString(ctx, "rag.vectorStore.qdrant.apiKey", ""))
 }
 
 func aiConfigString(ctx context.Context, pattern string, def string) string {

@@ -27,6 +27,7 @@ type qdrantSearchHit struct {
 type qdrantClient struct {
 	baseURL    string
 	collection string
+	apiKey     string
 	httpClient *http.Client
 }
 
@@ -34,8 +35,16 @@ func newQdrantClient(ctx context.Context) *qdrantClient {
 	return &qdrantClient{
 		baseURL:    aiQdrantBaseURL(ctx),
 		collection: aiQdrantCollection(ctx),
+		apiKey:     aiQdrantAPIKey(ctx),
 		httpClient: &http.Client{Timeout: time.Duration(aiRequestTimeoutSeconds(ctx)) * time.Second},
 	}
+}
+
+func (c *qdrantClient) applyAuthHeader(req *http.Request) {
+	if strings.TrimSpace(c.apiKey) == "" {
+		return
+	}
+	req.Header.Set("api-key", strings.TrimSpace(c.apiKey))
 }
 
 func (c *qdrantClient) ensureCollection(ctx context.Context, vectorSize int) error {
@@ -48,6 +57,7 @@ func (c *qdrantClient) ensureCollection(ctx context.Context, vectorSize int) err
 	if err != nil {
 		return err
 	}
+	c.applyAuthHeader(req)
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
@@ -73,6 +83,7 @@ func (c *qdrantClient) ensureCollection(ctx context.Context, vectorSize int) err
 		return err
 	}
 	createReq.Header.Set("Content-Type", "application/json")
+	c.applyAuthHeader(createReq)
 
 	createResp, err := c.httpClient.Do(createReq)
 	if err != nil {
@@ -101,6 +112,7 @@ func (c *qdrantClient) upsertPoints(ctx context.Context, points []qdrantPoint) e
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	c.applyAuthHeader(req)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -138,6 +150,7 @@ func (c *qdrantClient) search(ctx context.Context, vector []float64, limit int) 
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	c.applyAuthHeader(req)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

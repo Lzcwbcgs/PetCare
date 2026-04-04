@@ -45,9 +45,9 @@ type openAIEmbeddingResponse struct {
 }
 
 func newOpenAICompatibleProvider(ctx context.Context) AIProvider {
-	baseURL := strings.TrimRight(aiConfigString(ctx, "ai.providers.api.baseUrl", "https://api.openai.com/v1"), "/")
+	baseURL := strings.TrimRight(aiConfigString(ctx, "ai.providers.api.baseUrl", "https://api.deepseek.com/v1"), "/")
 	if baseURL == "" {
-		baseURL = "https://api.openai.com/v1"
+		baseURL = "https://api.deepseek.com/v1"
 	}
 	return &openAICompatibleProvider{
 		baseURL: baseURL,

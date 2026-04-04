@@ -2,9 +2,6 @@
 ---
 title: 宠物医疗协同管理平台 RESTful API 接口文档
 author: OpenAI
-date: 2026-03-25
----
-
 > 适用技术栈：Go（Gin / GoFrame）+ MySQL 8.0 + Vue  
 > 文档用途：前后端分离开发与联调  
 > 接口风格：RESTful  
