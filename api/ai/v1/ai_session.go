@@ -9,7 +9,6 @@ type SessionCreateReq struct {
 	DoctorID   *int64 `json:"doctor_id" v:"min:1#Invalid doctor ID" dc:"Doctor ID (optional)"`
 	ModelType  string `json:"model_type" v:"in:api,local#Invalid model_type" dc:"Model provider type: api/local"`
 	ModelName  string `json:"model_name" v:"max-length:100#Model name is too long" dc:"Model name"`
-	RagEnabled *int   `json:"rag_enabled" v:"in:0,1#rag_enabled must be 0 or 1" dc:"Enable RAG: 1 yes, 0 no"`
 }
 
 type SessionCreateRes struct {
@@ -30,11 +29,8 @@ type SessionDetailRes struct {
 	SourceType     int    `json:"source_type" dc:"Source type"`
 	ModelType      string `json:"model_type" dc:"Model type"`
 	ModelName      string `json:"model_name" dc:"Model name"`
-	ProviderName   string `json:"provider_name" dc:"Provider name"`
 	SessionSummary string `json:"session_summary" dc:"Session summary"`
-	RagEnabled     int    `json:"rag_enabled" dc:"Whether RAG is enabled"`
 	Status         int    `json:"status" dc:"Session status"`
-	LastMessageAt  string `json:"last_message_at" dc:"Last message time"`
 	CreatedAt      string `json:"created_at" dc:"Created time"`
 	UpdatedAt      string `json:"updated_at" dc:"Updated time"`
 }

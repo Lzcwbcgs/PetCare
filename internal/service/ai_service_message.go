@@ -53,10 +53,12 @@ func (s aiService) SendMessageStream(ctx context.Context, in AISendMessageInput,
 		Update()
 
 	emit(AIStreamEvent{
-		Type: "start",
+		Type: "user_message",
 		Payload: map[string]any{
-			"session_id": session.ID,
-			"message_id": userMessageID,
+			"id":              userMessageID,
+			"sender_type":     senderType,
+			"message_content": messageContent,
+			"created_at":      now.Format("2006-01-02 15:04:05"),
 		},
 	})
 
@@ -110,7 +112,7 @@ func (s aiService) SendMessageStream(ctx context.Context, in AISendMessageInput,
 		}
 		responseBuilder.WriteString(chunk.Content)
 		emit(AIStreamEvent{
-			Type: "chunk",
+			Type: "message",
 			Payload: map[string]any{
 				"content": chunk.Content,
 			},
@@ -175,15 +177,15 @@ func (s aiService) SendMessageStream(ctx context.Context, in AISendMessageInput,
 		}).
 		Update()
 
-	finishReason := strings.TrimSpace(chatResult.FinishReason)
-	if finishReason == "" {
-		finishReason = "stop"
-	}
 	emit(AIStreamEvent{
 		Type: "done",
 		Payload: map[string]any{
-			"message_id":    aiMessageID,
-			"finish_reason": finishReason,
+			"ai_message": map[string]any{
+				"id":              aiMessageID,
+				"sender_type":     aiSenderTypeAI,
+				"message_content": aiContent,
+				"created_at":      time.Now().Format("2006-01-02 15:04:05"),
+			},
 		},
 	})
 	RecordOperationLogByRole(

@@ -33,7 +33,6 @@ func (c *Controller) ListAnalysisRecords(ctx context.Context, req *v1.SessionAna
 			ID:               item.ID,
 			AnalysisType:     item.AnalysisType,
 			InputSource:      item.InputSource,
-			SummaryTitle:     item.SummaryTitle,
 			AnalysisResult:   item.AnalysisResult,
 			RiskLevel:        item.RiskLevel,
 			ReviewedByDoctor: item.ReviewedByDoctor,

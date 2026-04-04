@@ -63,8 +63,7 @@ type (
 		FileName       string
 		Status         string
 		Progress       int
-		ChunkTotal     int
-		EmbeddedChunks int
+		ChunkCount     int
 		VectorCount    int
 		ErrorMessage   string
 		UpdatedAt      string
@@ -271,8 +270,7 @@ func (s adminKnowledgeService) Status(ctx context.Context, in AdminKnowledgeStat
 			FileName:       record["file_name"].String(),
 			Status:         knowledgeStatusText(statusValue),
 			Progress:       progress,
-			ChunkTotal:     chunkTotal,
-			EmbeddedChunks: embeddedChunks,
+			ChunkCount:     chunkTotal,
 			VectorCount:    embeddedChunks,
 			ErrorMessage:   record["error_message"].String(),
 			UpdatedAt:      formatGTime(record["updated_at"].GTime()),
@@ -656,7 +654,7 @@ func knowledgeStatusText(status int) string {
 	case knowledgeStatusProcessing:
 		return "processing"
 	case knowledgeStatusSuccess:
-		return "success"
+		return "completed"
 	case knowledgeStatusFailed:
 		return "failed"
 	default:

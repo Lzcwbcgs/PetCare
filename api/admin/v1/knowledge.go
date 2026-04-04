@@ -24,15 +24,14 @@ type KnowledgeStatusReq struct {
 }
 
 type KnowledgeStatusItem struct {
-	KnowledgeID    int64  `json:"knowledge_id" dc:"知识文档ID"`
-	FileName       string `json:"file_name" dc:"文件名"`
-	Status         string `json:"status" dc:"状态"`
-	Progress       int    `json:"progress" dc:"进度，0-100"`
-	ChunkTotal     int    `json:"chunk_total" dc:"切片总数"`
-	EmbeddedChunks int    `json:"embedded_chunks" dc:"已向量化切片数"`
-	VectorCount    int    `json:"vector_count" dc:"向量数量"`
-	ErrorMessage   string `json:"error_message" dc:"错误信息"`
-	UpdatedAt      string `json:"updated_at" dc:"更新时间"`
+	KnowledgeID  int64  `json:"knowledge_id" dc:"知识文档ID"`
+	FileName     string `json:"file_name" dc:"文件名"`
+	Status       string `json:"status" dc:"状态"`
+	Progress     int    `json:"progress" dc:"进度，0-100"`
+	ChunkCount   int    `json:"chunk_count" dc:"切片总数"`
+	VectorCount  int    `json:"vector_count" dc:"向量数量"`
+	ErrorMessage string `json:"error_message" dc:"错误信息"`
+	UpdatedAt    string `json:"updated_at" dc:"更新时间"`
 }
 
 type KnowledgeStatusRes struct {

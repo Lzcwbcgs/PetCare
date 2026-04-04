@@ -26,7 +26,6 @@ func (c *Controller) CreateSession(ctx context.Context, req *v1.SessionCreateReq
 		DoctorID:        req.DoctorID,
 		ModelType:       req.ModelType,
 		ModelName:       req.ModelName,
-		RagEnabled:      req.RagEnabled,
 	})
 	if err != nil {
 		return nil, err
@@ -63,11 +62,8 @@ func (c *Controller) Detail(ctx context.Context, req *v1.SessionDetailReq) (res 
 		SourceType:     output.SourceType,
 		ModelType:      output.ModelType,
 		ModelName:      output.ModelName,
-		ProviderName:   output.ProviderName,
 		SessionSummary: output.SessionSummary,
-		RagEnabled:     output.RagEnabled,
 		Status:         output.Status,
-		LastMessageAt:  output.LastMessageAt,
 		CreatedAt:      output.CreatedAt,
 		UpdatedAt:      output.UpdatedAt,
 	}, nil

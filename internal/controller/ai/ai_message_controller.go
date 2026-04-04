@@ -69,9 +69,6 @@ func (c *Controller) ListMessages(ctx context.Context, req *v1.SessionMessageLis
 			SenderID:       item.SenderID,
 			MessageContent: item.MessageContent,
 			MessageType:    item.MessageType,
-			ProviderType:   item.ProviderType,
-			ProviderName:   item.ProviderName,
-			FinishReason:   item.FinishReason,
 			CreatedAt:      item.CreatedAt,
 		})
 	}

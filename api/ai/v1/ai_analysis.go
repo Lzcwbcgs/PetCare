@@ -11,7 +11,6 @@ type SessionAnalysisItem struct {
 	ID               int64  `json:"id" dc:"Analysis record ID"`
 	AnalysisType     int    `json:"analysis_type" dc:"Analysis type"`
 	InputSource      int    `json:"input_source" dc:"Input source"`
-	SummaryTitle     string `json:"summary_title" dc:"Summary title"`
 	AnalysisResult   string `json:"analysis_result" dc:"Analysis result"`
 	RiskLevel        *int   `json:"risk_level" dc:"Risk level"`
 	ReviewedByDoctor int    `json:"reviewed_by_doctor" dc:"Reviewed by doctor"`

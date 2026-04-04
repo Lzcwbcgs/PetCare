@@ -24,9 +24,6 @@ type SessionMessageItem struct {
 	SenderID       *int64 `json:"sender_id" dc:"Sender ID"`
 	MessageContent string `json:"message_content" dc:"Message content"`
 	MessageType    int    `json:"message_type" dc:"Message type"`
-	ProviderType   string `json:"provider_type" dc:"Provider type"`
-	ProviderName   string `json:"provider_name" dc:"Provider name"`
-	FinishReason   string `json:"finish_reason" dc:"Finish reason"`
 	CreatedAt      string `json:"created_at" dc:"Created time"`
 }
 

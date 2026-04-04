@@ -1,56 +1,59 @@
 # PetCare
 
-PetCare 是一个基于 GoFrame v2 的宠物医院协同管理平台后端项目，面向用户、医生和管理员三类角色提供认证、档案、预约、病历、报告、通知与后台管理能力。
+PetCare 是一个基于 GoFrame v2 的宠物医疗协同管理平台后端项目，面向用户、医生、管理员三类角色，提供认证、宠物档案、预约、病历、报告、通知、AI 问诊、知识库与后台管理能力。
 
-本文档已按仓库当前代码状态更新，内容对应 **2026-03-31** 的实际实现进度。
+本文档按当前仓库代码状态更新，和现在的实现保持一致。
 
 ## 技术栈
 
-- Go 1.25.0
-- GoFrame v2.10.0
+- Go 1.25
+- GoFrame v2
 - MySQL 8.0
-- GoFrame CLI `gf`
 - Swagger / OpenAPI
-- Docker + Kustomize
+- Docker
+- Kustomize
+- AI Provider: API / Ollama
+- RAG Vector Store: Qdrant
 
 ## 当前进度
 
 | 模块 | 状态 | 说明 |
 | --- | --- | --- |
-| 基础工程 | 已完成 | GoFrame 启动、统一响应结构、配置加载、Swagger/OpenAPI、静态文件挂载 |
+| 基础工程 | 已完成 | GoFrame 启动、统一响应结构、配置加载、Swagger/OpenAPI、静态资源挂载 |
 | 认证模块 | 已完成 | 用户注册、统一登录、获取当前登录信息、退出登录、JWT 与角色鉴权 |
-| 个人资料模块 | 已完成 | 用户资料、医生资料、管理员资料查询；用户/医生支持修改资料和密码 |
-| 宠物档案模块 | 已完成 | 宠物 CRUD、病史、疫苗、过敏记录；用户写入、医生可读 |
+| 资料模块 | 已完成 | 用户资料、医生资料、管理员资料查询；用户和医生支持更新资料与密码 |
+| 宠物档案模块 | 已完成 | 宠物 CRUD、病史、疫苗、过敏记录；用户写入，医生只读 |
 | 预约模块 | 已完成 | 用户创建/查看/取消预约，医生查看接诊详情并更新预约状态 |
 | 病历与报告模块 | 已完成 | 医生创建/更新/查看病历，上传/删除报告；用户端可查看病历与报告 |
-| 通知模块 | 已完成 | 管理员发布系统通知，医生端通知读取，用户/医生通用通知列表与已读 |
-| 管理后台模块 | 已完成 | 医院管理、医生管理、系统通知管理 |
+| 通知模块 | 已完成 | 管理员发布系统通知，用户/医生查看通知并标记已读 |
+| 管理后台 | 已完成 | 医院管理、医生管理、系统通知管理、操作日志查询 |
 | 公共辅助接口 | 已完成 | 医院下拉、医院医生下拉、通用文件上传 |
-| AI 相关能力 | 已预留数据模型 | 已生成 `ai_session`、`ai_message`、`ai_analysis_record` DAO/Model，尚未开放业务接口 |
-| 部署资源 | 初步具备 | Dockerfile、Kustomize base/overlays、OpenAPI 清单已在仓库中 |
+| AI 问诊模块 | 已完成 | 创建 AI 会话、SSE 流式发送消息、查询会话详情、消息记录、分析结果 |
+| 医生 AI 查看 | 已完成 | 医生端 AI 会话列表、消息记录、分析结果查看 |
+| 知识库 / RAG | 已完成 | 知识库文件上传、向量化进度查询、RAG 检索接入 AI 问诊 |
+| 部署资源 | 已具备 | Dockerfile、Kustomize base/overlay、OpenAPI 清单已在仓库中 |
 
-## 已实现能力概览
+## 已实现能力
 
-### 1. 基础工程
+### 基础能力
 
-- 服务配置文件固定为 [manifest/config/config.yaml](manifest/config/config.yaml)
+- 服务配置文件固定为 [`manifest/config/config.yaml`](./manifest/config/config.yaml)
 - 默认监听地址 `:8000`
-- 启动时自动注册 OpenAPI 与 Swagger
 - 根路径 `/` 自动跳转到 Swagger 页面
 - 统一响应结构为 `code / message / data`
-- 已挂载静态资源目录：
+- 已挂载静态资源目录
   - `/uploads` -> `resource/public/uploads`
   - `/reports` -> `resource/public/uploads/reports`
 
-### 2. 数据模型
+### 数据模型
 
-项目已基于数据库生成标准的 DAO / DO / Entity：
+当前项目已生成并使用标准 DAO / DO / Entity：
 
-- [internal/dao](internal/dao)
-- [internal/model/do](internal/model/do)
-- [internal/model/entity](internal/model/entity)
+- [`internal/dao`](./internal/dao)
+- [`internal/model/do`](./internal/model/do)
+- [`internal/model/entity`](./internal/model/entity)
 
-当前已落库并被代码使用或预留的数据表主要包括：
+当前核心业务表包括：
 
 - `user`
 - `doctor`
@@ -68,14 +71,24 @@ PetCare 是一个基于 GoFrame v2 的宠物医院协同管理平台后端项目
 - `ai_session`
 - `ai_message`
 - `ai_analysis_record`
+- `knowledge_document`
+- `knowledge_chunk`
+- `knowledge_job`
 
-### 3. 角色与业务边界
+### AI 与知识库
 
-- 用户：注册、登录、维护个人资料、管理自己的宠物、发起预约、查看病历与通知
-- 医生：登录、维护个人资料、查看本人接诊预约、维护本人病历与报告、查看通知
-- 管理员：登录、查看管理员资料、管理医院、管理医生、发布系统通知
+- 支持创建 AI 会话
+- 支持通过 SSE 流式发送 AI 消息
+- 支持查询 AI 会话详情、消息记录、分析结果
+- 支持医生端查看 AI 会话、消息与分析结果
+- 支持知识库文档上传
+- 支持知识库切片、向量化、进度查询
+- 支持 RAG 检索增强问诊
+- 支持 API Provider 与本地 Ollama Provider
 
 ## 当前接口清单
+
+当前已实现接口共 71 个。
 
 ### 认证模块
 
@@ -99,25 +112,6 @@ PetCare 是一个基于 GoFrame v2 的宠物医院协同管理平台后端项目
 ### 管理员资料
 
 - `GET /api/admin/profile`
-
-### 管理员后台
-
-- 医院管理
-  - `POST /api/admin/hospitals`
-  - `GET /api/admin/hospitals`
-  - `GET /api/admin/hospitals/{hospital_id}`
-  - `PUT /api/admin/hospitals/{hospital_id}`
-  - `DELETE /api/admin/hospitals/{hospital_id}`
-- 医生管理
-  - `POST /api/admin/doctors`
-  - `GET /api/admin/doctors`
-  - `GET /api/admin/doctors/{doctor_id}`
-  - `PUT /api/admin/doctors/{doctor_id}`
-  - `DELETE /api/admin/doctors/{doctor_id}`
-- 系统通知管理
-  - `POST /api/admin/notifications`
-  - `GET /api/admin/notifications`
-  - `DELETE /api/admin/notifications/{notification_id}`
 
 ### 宠物档案
 
@@ -170,15 +164,50 @@ PetCare 是一个基于 GoFrame v2 的宠物医院协同管理平台后端项目
 - `GET /api/medical-records/{medical_record_id}`
 - `GET /api/medical-records/{medical_record_id}/reports`
 
+### AI 问诊
+
+- `POST /api/ai/sessions`
+- `POST /api/ai/sessions/{session_id}/messages`
+- `GET /api/ai/sessions/{session_id}`
+- `GET /api/ai/sessions/{session_id}/messages`
+- `GET /api/ai/sessions/{session_id}/analysis-records`
+
+### 医生 AI 查看
+
+- `GET /api/doctor/ai/sessions`
+- `GET /api/doctor/ai/sessions/{session_id}/messages`
+- `GET /api/doctor/ai/sessions/{session_id}/analysis-records`
+
 ### 通知中心
 
-- 通用通知
-  - `GET /api/notifications`
-  - `GET /api/notifications/{notification_id}`
-  - `PUT /api/notifications/{notification_id}/read`
-- 医生专属通知
-  - `GET /api/doctor/notifications`
-  - `PUT /api/doctor/notifications/{notification_id}/read`
+- `GET /api/notifications`
+- `GET /api/notifications/{notification_id}`
+- `PUT /api/notifications/{notification_id}/read`
+- `GET /api/doctor/notifications`
+- `PUT /api/doctor/notifications/{notification_id}/read`
+- `POST /api/admin/notifications`
+- `GET /api/admin/notifications`
+- `DELETE /api/admin/notifications/{notification_id}`
+
+### 管理后台
+
+- `POST /api/admin/hospitals`
+- `GET /api/admin/hospitals`
+- `GET /api/admin/hospitals/{hospital_id}`
+- `PUT /api/admin/hospitals/{hospital_id}`
+- `DELETE /api/admin/hospitals/{hospital_id}`
+- `POST /api/admin/doctors`
+- `GET /api/admin/doctors`
+- `GET /api/admin/doctors/{doctor_id}`
+- `PUT /api/admin/doctors/{doctor_id}`
+- `DELETE /api/admin/doctors/{doctor_id}`
+- `GET /api/admin/operation-logs`
+- `GET /api/admin/operation-logs/{log_id}`
+
+### 知识库 / RAG
+
+- `POST /api/admin/knowledge/upload`
+- `GET /api/admin/knowledge/status`
 
 ### 公共辅助接口
 
@@ -192,24 +221,29 @@ PetCare 是一个基于 GoFrame v2 的宠物医院协同管理平台后端项目
 
 - 安装 Go 1.25+
 - 准备 MySQL 8.0
-- 创建数据库：`pet_medical_system`
-- 按需安装 GoFrame CLI：`go install github.com/gogf/gf/cmd/gf/v2@latest`
+- 创建数据库 `pet_medical_system`
+- 按需安装 GoFrame CLI
 
-默认业务配置位于：
+```bash
+go install github.com/gogf/gf/cmd/gf/v2@latest
+```
 
-- [manifest/config/config.yaml](manifest/config/config.yaml)
+业务配置位于：
 
-当前默认配置包括：
+- [`manifest/config/config.yaml`](./manifest/config/config.yaml)
 
-- 服务监听地址：`:8000`
-- Swagger 路径：`/swagger`
-- OpenAPI 路径：`/api.json`
-- 默认数据库连接：`mysql:root:123456@tcp(127.0.0.1:3306)/pet_medical_system`
-- JWT 配置：`jwtSecret`、`jwtIssuer`、`expireHours`
+配置内容包括：
+
+- 服务监听地址
+- Swagger / OpenAPI 路径
+- 数据库连接
+- JWT 配置
+- AI Provider 配置
+- RAG / Qdrant 配置
 
 DAO 生成配置位于：
 
-- [hack/config.yaml](hack/config.yaml)
+- [`hack/config.yaml`](./hack/config.yaml)
 
 ### 2. 启动项目
 
@@ -236,13 +270,11 @@ http://127.0.0.1:8000
 - Swagger UI: `http://127.0.0.1:8000/swagger/`
 - OpenAPI JSON: `http://127.0.0.1:8000/api.json`
 
-OpenAPI 增强配置位于 [internal/cmd/cmd.go](internal/cmd/cmd.go)。
+OpenAPI 增强配置位于 [`internal/cmd/cmd.go`](./internal/cmd/cmd.go)。
 
 ## 常用开发命令
 
-[Makefile](Makefile) 引入了 [hack/hack.mk](hack/hack.mk) 和 [hack/hack-cli.mk](hack/hack-cli.mk)，常用命令如下：
-
-- `make build`：使用 GoFrame 构建二进制
+- `make build`：构建二进制
 - `make dao`：重新生成 DAO / DO / Entity
 - `make ctrl`：根据 API 生成控制器骨架
 - `make service`：生成 Service 接口
@@ -264,46 +296,44 @@ internal/model/entity/ GoFrame 生成的 Entity 模型
 manifest/config/       业务配置
 manifest/docker/       Docker 构建资源
 manifest/deploy/       Kustomize 部署清单
+manifest/api/          OpenAPI 清单
 resource/public/       静态资源与上传目录
 utility/               测试辅助代码
 ```
 
 ## 测试与验证
 
-已在当前仓库状态下实际通过：
+当前仓库状态下已验证：
 
 - `go test ./...`
-- `go build ./...`
 
-当前已有测试主要集中在以下基础能力：
+当前已有测试主要集中在：
 
-- [internal/controller/auth/auth_test.go](internal/controller/auth/auth_test.go)
-- [internal/controller/auth/profile_test.go](internal/controller/auth/profile_test.go)
-- [internal/middleware/auth_test.go](internal/middleware/auth_test.go)
-- [internal/service/auth_impl_test.go](internal/service/auth_impl_test.go)
-- [internal/service/auth_token_test.go](internal/service/auth_token_test.go)
-- [internal/service/auth_role_test.go](internal/service/auth_role_test.go)
+- [`internal/controller/auth/auth_test.go`](./internal/controller/auth/auth_test.go)
+- [`internal/controller/auth/profile_test.go`](./internal/controller/auth/profile_test.go)
+- [`internal/middleware/auth_test.go`](./internal/middleware/auth_test.go)
+- [`internal/service/auth_impl_test.go`](./internal/service/auth_impl_test.go)
+- [`internal/service/auth_token_test.go`](./internal/service/auth_token_test.go)
+- [`internal/service/auth_role_test.go`](./internal/service/auth_role_test.go)
 
 说明：
 
 - 认证、资料、中间件与鉴权基础能力已有自动化测试覆盖
-- 预约、医生工作台、管理员后台、宠物档案、通知等业务模块目前主要通过编译与联调验证
+- 业务模块当前主要通过编译与接口联调验证
 
 ## 部署资源
 
-仓库中已经包含基础部署资源：
+仓库中已包含基础部署资源：
 
-- Dockerfile: [manifest/docker/Dockerfile](manifest/docker/Dockerfile)
-- Kustomize base: [manifest/deploy/kustomize/base](manifest/deploy/kustomize/base)
-- Kustomize develop overlay: [manifest/deploy/kustomize/overlays/develop](manifest/deploy/kustomize/overlays/develop)
-- OpenAPI 清单: [manifest/api/openapi.yaml](manifest/api/openapi.yaml)
+- Dockerfile: [`manifest/docker/Dockerfile`](./manifest/docker/Dockerfile)
+- Kustomize base: [`manifest/deploy/kustomize/base`](./manifest/deploy/kustomize/base)
+- Kustomize develop overlay: [`manifest/deploy/kustomize/overlays/develop`](./manifest/deploy/kustomize/overlays/develop)
+- OpenAPI 清单: [`manifest/api/openapi.yaml`](./manifest/api/openapi.yaml)
 
 ## 后续建议
 
-按当前仓库状态，下一阶段更适合继续推进以下事项：
-
-- 补齐预约、病历、通知、后台模块的独立自动化测试
-- 完善数据库迁移、初始化脚本与种子数据
-- 接入操作日志与审计链路
-- 推进 AI 会话、消息、分析记录相关业务接口
-- 完善 Docker / K8s 环境变量化与部署说明
+- 为预约、宠物、病历、通知、AI、知识库模块补齐更细粒度自动化测试
+- 增加数据库迁移、初始化脚本与种子数据
+- 把配置中的敏感信息迁移为环境变量或外部密钥管理
+- 增加 AI / RAG 相关链路的观测、限流和失败兜底
+- 补齐部署文档与生产环境配置说明
