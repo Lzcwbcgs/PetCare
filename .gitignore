@@ -14,5 +14,6 @@ main.exe
 output/
 manifest/output/
 temp/
+tempgocache/
 temp.yaml
 bin

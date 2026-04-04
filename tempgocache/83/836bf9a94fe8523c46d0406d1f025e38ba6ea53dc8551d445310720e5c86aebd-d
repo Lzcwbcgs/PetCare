@@ -1,6 +1,0 @@
-./gudp.go
-./gudp_conn.go
-./gudp_conn_client_conn.go
-./gudp_conn_server_conn.go
-./gudp_func.go
-./gudp_server.go

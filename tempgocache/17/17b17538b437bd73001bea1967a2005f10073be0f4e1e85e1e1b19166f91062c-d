@@ -1,5 +1,0 @@
-./structcache.go
-./structcache_cached.go
-./structcache_cached_field_info.go
-./structcache_cached_struct_info.go
-./structcache_pool.go
