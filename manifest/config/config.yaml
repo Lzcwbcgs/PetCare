@@ -28,7 +28,7 @@ ai:
   providers:
     api:
       baseUrl: "https://api.deepseek.com/v1"
-      apiKey: "sk-9a61af5d75314c2b9cffb294badcd88e"
+      apiKey: ""
       chatModel: "deepseek-chat"
       embeddingModel: "text-embedding-3-small"
     local:
@@ -45,6 +45,6 @@ rag:
   vectorStore:
     type: "qdrant"
     qdrant:
-      baseUrl: "https://29635c67-ea78-487a-a53d-48cc92d930e6.sa-east-1-0.aws.cloud.qdrant.io"
-      apiKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIiwic3ViamVjdCI6ImFwaS1rZXk6MDNlN2U4ZWUtNTg5NC00OTFhLWE4NmQtMjQwOTYxMmNkNDEyIn0.etsHYTFn6-YxDCb-E-B2JQv-F5LSis2xCIrR3lmwGzI"
+      baseUrl: ""
+      apiKey: ""
       collection: "petcare_knowledge"
